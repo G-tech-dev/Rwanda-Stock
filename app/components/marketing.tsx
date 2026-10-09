@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowRight, Leaf } from "lucide-react";
+import { ArrowRight, Wallet } from "lucide-react";
 
 const links = [
   { href: "/features", label: "Features" },
@@ -12,9 +12,9 @@ const links = [
 export function MarketingHeader() {
   return (
     <header className="marketing-header">
-      <Link href="/" className="marketing-brand" aria-label="Rwanda Stock home">
-        <span className="marketing-brand-mark"><Leaf size={22} /></span>
-        <span>Rwanda Stock<span className="marketing-brand-sub">Business made simpler</span></span>
+      <Link href="/" className="marketing-brand" aria-label="EasyPay Rwanda home">
+        <span className="marketing-brand-mark"><Wallet size={22} /></span>
+        <span>EasyPay Rwanda<span className="marketing-brand-sub">Simple payments for business</span></span>
       </Link>
       <nav className="marketing-nav" aria-label="Main navigation">
         {links.map(link => <Link key={link.href} href={link.href}>{link.label}</Link>)}
@@ -31,15 +31,15 @@ export function MarketingFooter() {
   return (
     <footer className="marketing-footer">
       <Link href="/" className="marketing-brand">
-        <span className="marketing-brand-mark"><Leaf size={20} /></span>
-        <span>Rwanda Stock<span className="marketing-brand-sub">Business made simpler</span></span>
+        <span className="marketing-brand-mark"><Wallet size={20} /></span>
+        <span>EasyPay Rwanda<span className="marketing-brand-sub">Simple payments for business</span></span>
       </Link>
-      <p>Simple tools for Rwanda's small businesses.</p>
+      <p>Simple payment tools for Rwanda's small businesses.</p>
       <div className="marketing-footer-links">
         {links.map(link => <Link key={link.href} href={link.href}>{link.label}</Link>)}
-        <Link href="/dashboard">Dashboard</Link>
+        <Link href="/workspace">Dashboard</Link>
       </div>
-      <small>© {new Date().getFullYear()} Rwanda Stock. Demo experience.</small>
+      <small>© {new Date().getFullYear()} EasyPay Rwanda. Demo experience.</small>
     </footer>
   );
 }
