@@ -20,7 +20,6 @@ export default function PaymentsPage() {
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const [payment, setPayment] = useState<CreatedPayment | null>(null);
-  const [confirmationSecret, setConfirmationSecret] = useState("");
   const [confirmBusy, setConfirmBusy] = useState(false);
   const [confirmMessage, setConfirmMessage] = useState("");
 
@@ -53,7 +52,7 @@ export default function PaymentsPage() {
       const response = await fetch("/api/payments/confirm", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ txRef: payment.txRef, confirmationSecret })
+        body: JSON.stringify({ txRef: payment.txRef })
       });
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || "Payment could not be confirmed.");
@@ -100,9 +99,8 @@ export default function PaymentsPage() {
       <a className="marketing-button payment-submit" href={`tel:${payment.ussdCode.replace("#", "%23")}`}>Open {payment.network === "mtn" ? "MTN" : "Airtel"} USSD menu <ArrowRight size={16}/></a>
       <ol>{payment.instructions.map((instruction, index) => <li key={index}>{instruction}</li>)}</ol>
       <p className="payment-field-note">After the operator confirms the transfer, the trader should verify the payment on their phone before recording receipt below.</p>
-      <label htmlFor="trader-confirmation">Trader app confirmation code</label>
-      <input id="trader-confirmation" type="password" value={confirmationSecret} onChange={e => setConfirmationSecret(e.target.value)} autoComplete="off" placeholder="Trader confirmation code" maxLength={128}/>
-      <button type="button" className="marketing-button payment-submit" disabled={confirmBusy || !confirmationSecret} onClick={confirmPayment}>{confirmBusy ? "Recording confirmation…" : "Trader confirms receipt"} <CheckCircle2 size={16}/></button>
+      <p className="payment-field-note">The trader must be signed in to the correct business account before confirming receipt.</p>
+      <button type="button" className="marketing-button payment-submit" disabled={confirmBusy} onClick={confirmPayment}>{confirmBusy ? "Recording confirmation…" : "Trader confirms receipt"} <CheckCircle2 size={16}/></button>
       {confirmMessage && <p role="status" className="payment-field-note">{confirmMessage}</p>}
     </section>}
   </main></MarketingLayout>;
