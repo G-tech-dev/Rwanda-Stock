@@ -1,6 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
-import { ArrowRight, BarChart3, CheckCircle2, ClipboardList, ShieldCheck, Smartphone, Store, Utensils, Pill, BriefcaseBusiness, Wallet } from "lucide-react";
+import { ArrowRight, BarChart3, Boxes, CheckCircle2, ShieldCheck, Smartphone, Store, Utensils, Pill, BriefcaseBusiness, Wallet } from "lucide-react";
 import { MarketingLayout } from "./components/marketing";
 
 const businessTypes = [
@@ -49,7 +49,7 @@ export default function HomePage() {
 
         <section className="home-feature-band">
           <div className="feature-band-image"><Image src="https://images.unsplash.com/photo-1556742502-ec7c0e9f34b1?auto=format&fit=crop&w=1200&q=85" alt="Small business owner reviewing business activity" fill sizes="(max-width: 800px) 100vw, 45vw" /></div>
-          <div className="feature-band-copy"><span className="section-kicker">LESS GUESSWORK, MORE CLARITY</span><h2>Spend less time chasing numbers.</h2><p>Start with a simple view of your items and daily activity. EasyPay Rwanda is being built to help local businesses grow one clear step at a time.</p><ul><li><CheckCircle2 size={18}/> Inventory overview and low-stock reminders</li><li><CheckCircle2 size={18}/> Business-type specific tools</li><li><CheckCircle2 size={18}/> A clean experience on phones and computers</li></ul><Link href="/features" className="marketing-button">See all features <ArrowRight size={16}/></Link></div>
+          <div className="feature-band-copy"><span className="section-kicker">LESS GUESSWORK, MORE CLARITY</span><h2>Spend less time chasing numbers.</h2><p>Start with payment requests and a clear view of what is pending. EasyPay Rwanda helps local businesses get paid with less confusion.</p><ul><li><CheckCircle2 size={18}/> Payment request creation and tracking</li><li><CheckCircle2 size={18}/> Business-type specific tools</li><li><CheckCircle2 size={18}/> A clean experience on phones and computers</li></ul><Link href="/features" className="marketing-button">See all features <ArrowRight size={16}/></Link></div>
         </section>
 
         <section className="home-cta"><div><span className="section-kicker">YOUR BUSINESS, MORE ORGANIZED</span><h2>Ready to take a clearer look at your business?</h2><p>Explore the current demo and see how Rwanda Stock can fit your workflow.</p></div><Link href="/dashboard" className="marketing-button light">Open the dashboard <ArrowRight size={16}/></Link></section>
