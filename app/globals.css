@@ -146,3 +146,49 @@
 @media(max-width:1000px){.marketing-header{padding:17px 22px}.marketing-nav{gap:15px}.home-hero{gap:30px;padding-top:55px}.home-hero-visual{height:400px}.home-proof-strip{margin-left:22px;margin-right:22px;grid-template-columns:repeat(2,minmax(0,1fr))}.business-cards{grid-template-columns:repeat(2,minmax(0,1fr))}.business-card-image{height:190px}.home-feature-band{gap:35px}.marketing-footer{padding-left:22px;padding-right:22px}}
 @media(max-width:700px){.marketing-header{padding:13px 15px;flex-wrap:wrap;gap:12px}.marketing-brand{font-size:15px}.marketing-brand-mark{width:35px;height:35px}.marketing-nav{order:3;width:100%;justify-content:space-between;gap:9px;border-top:1px solid #edf1ed;padding-top:11px}.marketing-nav a{font-size:11px}.marketing-header-actions{gap:11px;margin-left:auto}.marketing-login{font-size:11px}.marketing-button.small{font-size:10px;padding:9px 10px}.home-hero{grid-template-columns:1fr;padding:43px 18px 42px;gap:27px}.home-hero h1{font-size:43px;letter-spacing:-1.9px}.home-hero-lead{font-size:13px}.home-hero-visual{height:340px;margin:0 3px}.hero-photo-main{inset:0 12px 21px 15px}.hero-photo-small{width:105px;height:105px;right:-1px;bottom:35px}.hero-float-card{min-width:225px;padding:11px}.home-proof-strip{margin:0 15px 20px;padding:17px;gap:15px}.home-proof-strip>div{gap:8px}.proof-icon{height:34px;width:34px}.home-proof-strip strong{font-size:10px}.home-proof-strip small{font-size:9px}.marketing-section{padding:43px 17px 50px}.section-intro{margin-bottom:25px}.section-intro h2{font-size:30px}.business-cards{grid-template-columns:1fr;gap:13px}.business-card{display:grid;grid-template-columns:125px minmax(0,1fr)}.business-card-image{height:100%;min-height:155px}.business-card-copy{padding:15px 13px}.business-card-copy p{min-height:0}.home-feature-band{grid-template-columns:1fr;padding:45px 18px;gap:25px}.feature-band-image{height:260px}.feature-band-copy h2{font-size:31px}.home-cta{padding:31px 18px;align-items:flex-start;flex-direction:column}.marketing-footer{padding:23px 17px;grid-template-columns:1fr;gap:13px}.marketing-footer-links{gap:13px}.marketing-footer small{grid-column:auto}.inner-hero{padding:50px 18px 35px}.inner-hero h1{font-size:38px;letter-spacing:-1.5px}.inner-hero p{font-size:12px}.feature-cards{grid-template-columns:1fr}.feature-card{padding:19px}.tool-type-grid{grid-template-columns:1fr}.pricing-grid{grid-template-columns:1fr;padding:10px 17px 25px}.pricing-card{padding:22px}.about-hero{grid-template-columns:1fr;padding:45px 18px 35px;gap:25px}.about-hero h1{font-size:40px}.about-photo{height:270px}.about-values{grid-template-columns:1fr;padding:20px 18px 50px}.contact-layout{grid-template-columns:1fr;padding:8px 17px 50px;gap:17px}.contact-info,.contact-form{padding:21px}}
 @media(max-width:380px){.home-hero h1{font-size:38px}.marketing-header-actions{gap:7px}.marketing-button.small{padding:8px}.home-proof-strip{grid-template-columns:1fr}.hero-trust{gap:12px}.business-card{grid-template-columns:100px minmax(0,1fr)}}
+
+
+/* Payments */
+.marketing-nav a[href="/payments"]{color:#16845b}
+.payment-method-pills{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;margin-top:20px}
+.payment-method-pills span{display:inline-flex;align-items:center;gap:8px;border:1px solid #e2ece5;border-radius:999px;padding:9px 12px;color:#41604b;font-size:11px;font-weight:700;background:#fbfefc}
+.payment-layout{max-width:1000px;margin:0 auto;padding:8px 28px 80px;display:grid;grid-template-columns:1.15fr .85fr;gap:22px;align-items:start}
+.payment-form,.payment-side-card{border:1px solid #e4ebe5;border-radius:18px;background:#fff;padding:27px}
+.payment-form{display:grid;gap:11px}
+.payment-form-head{display:flex;align-items:center;gap:13px;margin-bottom:8px}
+.payment-secure-icon,.payment-side-icon{height:43px;width:43px;display:grid;place-items:center;background:#eaf6ef;color:#16845b;border-radius:13px;flex-shrink:0}
+.payment-form-head h2,.payment-side-card h2{font-size:18px;margin:0 0 5px;letter-spacing:-.4px}
+.payment-form-head p{font-size:10px;line-height:1.6;color:#78857c;margin:0}
+.payment-form label{font-size:11px;font-weight:700;color:#46564b;margin-top:6px}
+.payment-form input,.payment-form select{width:100%;border:1px solid #dfe7e1;border-radius:9px;padding:12px;font-size:12px;color:#25352b;background:#fff;outline:none}
+.payment-form input:focus,.payment-form select:focus{border-color:#16845b;box-shadow:0 0 0 3px #16845b15}
+.payment-plan-summary{display:flex;justify-content:space-between;align-items:center;gap:15px;border:1px solid #e2ece5;background:#f7fbf8;border-radius:11px;padding:14px;margin:3px 0}
+.payment-plan-summary strong,.payment-plan-summary span{display:block;font-size:11px}
+.payment-plan-summary span{font-size:10px;color:#78857c;margin-top:5px}
+.payment-plan-summary>strong{color:#16845b;text-align:right;max-width:140px;line-height:1.5}
+.payment-field-note{font-size:10px;line-height:1.7;color:#78857c;margin:-3px 0 3px}
+.payment-submit{width:100%;margin-top:9px}
+.payment-submit:disabled{opacity:.65;cursor:wait;transform:none}
+.payment-error{font-size:11px;line-height:1.6;color:#9d2f2f;background:#fff1f1;border:1px solid #f3d5d5;border-radius:9px;padding:11px;margin:4px 0}
+.payment-disclaimer{display:flex;align-items:flex-start;gap:7px;font-size:10px;line-height:1.7;color:#7a867d;margin:4px 0 0}
+.payment-disclaimer svg{flex-shrink:0;margin-top:2px}
+.payment-side-card{background:#f7faf7}
+.payment-side-icon{margin-bottom:16px}
+.payment-side-card h2{font-size:19px}
+.payment-side-card ul{list-style:none;padding:0;margin:20px 0;display:grid;gap:14px}
+.payment-side-card li{font-size:11px;line-height:1.7;color:#58665d;padding-left:21px;position:relative}
+.payment-side-card li:before{content:"✓";position:absolute;left:0;color:#16845b;font-weight:800}
+.payment-side-note{border:1px solid #e4e9e4;background:#fff;border-radius:10px;padding:12px;font-size:10px;line-height:1.7;color:#7a867d;margin-bottom:17px}
+.payment-back-link{display:inline-flex;align-items:center;gap:7px;font-size:11px;font-weight:700;color:#16845b;text-decoration:none}
+.payment-back-link:hover{text-decoration:underline}
+.payment-return-wrap{min-height:100vh;display:grid;place-items:center;padding:25px;background:#f5f8f5}
+.payment-return-card{max-width:540px;width:100%;border:1px solid #e2eae3;border-radius:20px;background:#fff;padding:36px;text-align:center;box-shadow:0 15px 45px #183e2710}
+.payment-result-icon{height:62px;width:62px;border-radius:18px;margin:0 auto 20px;display:grid;place-items:center}
+.payment-result-icon.success{background:#e7f7ed;color:#16845b}
+.payment-result-icon.pending{background:#fff5dd;color:#956b13}
+.payment-result-icon.warning{background:#fff0ef;color:#a53a32}
+.payment-return-card h1{font-size:29px;line-height:1.2;letter-spacing:-1px;margin:10px 0 12px}
+.payment-return-card>p{font-size:12px;line-height:1.9;color:#718077;margin:0}
+.payment-return-actions{display:flex;align-items:center;justify-content:center;gap:17px;flex-wrap:wrap;margin-top:24px}
+.payment-return-card>small{display:block;font-size:10px;line-height:1.7;color:#8a958d;margin-top:24px}
+@media(max-width:700px){.payment-layout{grid-template-columns:1fr;padding:8px 17px 50px;gap:15px}.payment-form,.payment-side-card{padding:21px}.payment-plan-summary{align-items:flex-start;flex-direction:column}.payment-plan-summary>strong{text-align:left;max-width:none}.payment-return-card{padding:27px 20px}.payment-return-card h1{font-size:25px}.payment-return-actions{flex-direction:column}.payment-return-actions .marketing-button{width:100%}}
