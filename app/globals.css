@@ -192,3 +192,38 @@
 .payment-return-actions{display:flex;align-items:center;justify-content:center;gap:17px;flex-wrap:wrap;margin-top:24px}
 .payment-return-card>small{display:block;font-size:10px;line-height:1.7;color:#8a958d;margin-top:24px}
 @media(max-width:700px){.payment-layout{grid-template-columns:1fr;padding:8px 17px 50px;gap:15px}.payment-form,.payment-side-card{padding:21px}.payment-plan-summary{align-items:flex-start;flex-direction:column}.payment-plan-summary>strong{text-align:left;max-width:none}.payment-return-card{padding:27px 20px}.payment-return-card h1{font-size:25px}.payment-return-actions{flex-direction:column}.payment-return-actions .marketing-button{width:100%}}
+
+
+/* Manual USSD payments */
+.payments-page{max-width:1160px;margin:0 auto;padding:46px 28px 76px}
+.inner-hero{padding:24px 0 36px}
+.section-kicker{font-size:10px;letter-spacing:1.5px;font-weight:800;color:#16845b}
+.inner-hero p{max-width:740px;color:#6c7a71;line-height:1.8;font-size:14px}
+.payment-method-pills{display:flex;gap:10px;flex-wrap:wrap;margin-top:22px}
+.payment-method-pills span{display:inline-flex;align-items:center;gap:7px;border:1px solid #e4ece6;background:#f8fbf8;border-radius:999px;padding:9px 12px;font-size:11px;font-weight:700;color:#315943}
+.payment-layout{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(270px,.8fr);gap:20px;align-items:start}
+.payment-form,.payment-side-card{background:white;border:1px solid #e5ece7;border-radius:17px;padding:24px;min-width:0}
+.payment-form-head{display:flex;align-items:center;gap:12px;margin-bottom:23px}
+.payment-secure-icon,.payment-side-icon{width:42px;height:42px;border-radius:13px;display:grid;place-items:center;background:#eaf6ef;color:#16845b;flex-shrink:0}
+.payment-form-head h2,.payment-side-card h2{font-size:17px;margin:0 0 5px;letter-spacing:-.4px}
+.payment-form-head p{font-size:11px;color:#7b887f;margin:0;line-height:1.6}
+.payment-form label{display:block;font-size:11px;font-weight:700;color:#34443a;margin:15px 0 7px}
+.payment-form input,.payment-form select{display:block;width:100%;border:1px solid #dfe8e1;border-radius:9px;padding:12px 13px;background:#fff;color:#1b2b21;font-size:12px;min-height:42px}
+.payment-form input:focus,.payment-form select:focus{outline:2px solid #a7d8b9;border-color:#16845b}
+.payment-field-note{font-size:11px;line-height:1.7;color:#728078}
+.payment-plan-summary{display:flex;justify-content:space-between;gap:15px;align-items:center;background:#f5faf6;border:1px solid #e4f0e7;border-radius:11px;padding:13px;margin:15px 0}
+.payment-plan-summary strong{font-size:12px}
+.payment-plan-summary span{display:block;color:#748278;font-size:10px;margin-top:5px}
+.payment-submit{width:100%;margin-top:13px;cursor:pointer}
+.payment-submit:disabled{opacity:.55;cursor:not-allowed;transform:none}
+.payment-disclaimer{display:flex;align-items:flex-start;gap:7px;color:#78857c;font-size:10px;line-height:1.6;margin:14px 0 0}
+.payment-disclaimer svg{flex-shrink:0;margin-top:1px;color:#16845b}
+.payment-error{font-size:12px;color:#b42318;background:#fff0ef;border-radius:9px;padding:10px 12px}
+.payment-side-card h2{margin:14px 0}
+.payment-side-card ul{padding-left:19px;margin:16px 0;color:#65746a;font-size:11px;line-height:1.9}
+.payment-side-note{padding:13px;background:#fff7e6;border:1px solid #f6e7bf;border-radius:10px;font-size:10px;line-height:1.7;color:#775a19}
+.payment-back-link{display:inline-flex;align-items:center;gap:7px;text-decoration:none;color:#24734f;font-size:11px;font-weight:700;margin-top:17px}
+.payment-instructions{max-width:760px;margin:22px auto 0}
+.payment-instructions ol{padding-left:21px;color:#526359;font-size:12px;line-height:1.9}
+.payment-instructions>p{font-size:12px;line-height:1.7;overflow-wrap:anywhere}
+@media(max-width:760px){.payments-page{padding:28px 15px 50px}.payment-layout{grid-template-columns:1fr}.payment-form,.payment-side-card{padding:18px}.inner-hero h1{font-size:39px;letter-spacing:-1.8px}.payment-plan-summary{align-items:flex-start;flex-direction:column}}
