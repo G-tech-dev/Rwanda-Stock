@@ -20,8 +20,8 @@ export function MarketingHeader() {
         {links.map(link => <Link key={link.href} href={link.href}>{link.label}</Link>)}
       </nav>
       <div className="marketing-header-actions">
-        <Link href="/dashboard" className="marketing-login">Sign in</Link>
-        <Link href="/dashboard" className="marketing-button small">Open dashboard <ArrowRight size={15} /></Link>
+        <Link href="/login" className="marketing-login">Sign in</Link>
+        <Link href="/workspace" className="marketing-button small">Open dashboard <ArrowRight size={15} /></Link>
       </div>
     </header>
   );
