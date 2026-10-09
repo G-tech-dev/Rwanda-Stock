@@ -14,7 +14,7 @@ declare global {
 
 let clientPromise: Promise<MongoClient> | undefined;
 
-export async function getDatabase(): Promise<Db> {
+export async function getMongoClient(): Promise<MongoClient> {
   if (!uri) throw new Error("MONGODB_URI is not configured.");
   if (process.env.NODE_ENV === "development") {
     global._mongoClientPromise ??= new MongoClient(uri).connect();
@@ -22,6 +22,10 @@ export async function getDatabase(): Promise<Db> {
   } else {
     clientPromise ??= new MongoClient(uri).connect();
   }
-  const client = await clientPromise;
+  return clientPromise;
+}
+
+export async function getDatabase(): Promise<Db> {
+  const client = await getMongoClient();
   return client.db(dbName);
 }
