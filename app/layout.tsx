@@ -2,9 +2,9 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Rwanda Stock | Business made simpler",
-  description: "Simple stock and sales management tools for small businesses in Rwanda.",
-  applicationName: "Rwanda Stock"
+  title: "EasyPay Rwanda | Simple payments for business",
+  description: "Simple payment requests, mobile-money payments, wallets and payment tracking for Rwanda's small businesses.",
+  applicationName: "EasyPay Rwanda"
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
