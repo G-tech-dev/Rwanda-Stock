@@ -1,0 +1,12 @@
+"use client";
+import {useEffect,useState} from "react";
+import {CheckCircle2,RefreshCw} from "lucide-react";
+type Payment={txRef:string;purpose:string;network:string;status:string;amountRwf:number;name:string;phone:string;createdAt:string};
+const fmt=(n:number)=>new Intl.NumberFormat("en-RW",{style:"currency",currency:"RWF",maximumFractionDigits:0}).format(n);
+export default function PendingPayments(){
+ const[payments,setPayments]=useState<Payment[]>([]);const[error,setError]=useState("");const[busy,setBusy]=useState("");const[message,setMessage]=useState("");
+ async function load(){setError("");try{const r=await fetch("/api/payments",{cache:"no-store"});const d=await r.json();if(!r.ok)throw new Error(d.error||"Could not load payments.");setPayments(d.payments||[]);}catch(e){setError(e instanceof Error?e.message:"Could not load payments.");}}
+ useEffect(()=>{void load()},[]);
+ async function confirm(txRef:string){setBusy(txRef);setMessage("");try{const r=await fetch("/api/payments/confirm",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({txRef})});const d=await r.json();if(!r.ok)throw new Error(d.error||"Could not confirm payment.");setMessage("Manual confirmation recorded. This is not independent operator verification.");await load();}catch(e){setError(e instanceof Error?e.message:"Could not confirm payment.");}finally{setBusy("")}}
+ return <section className="workspace-panel pending-payments"><div className="workspace-panel-title"><div><h2>Mobile-money payments</h2><p>Check your operator SMS or account before confirming.</p></div><button className="payment-refresh" onClick={()=>void load()} aria-label="Refresh payments"><RefreshCw size={15}/></button></div>{error&&<p className="auth-error" role="alert">{error}</p>}{message&&<p className="payment-field-note" role="status">{message}</p>}{payments.length===0&&!error&&<p className="workspace-empty">No payment references yet.</p>}{payments.map(p=><div className="pending-payment" key={p.txRef}><div><strong>{fmt(Number(p.amountRwf))}</strong><small>{p.network==="mtn"?"MTN MoMo":"Airtel Money"} · {p.purpose.replace("_"," ")} · {p.status}</small><small>{p.txRef}</small><small>{p.name} · {p.phone}</small></div>{p.status==="pending"?<button disabled={!!busy} onClick={()=>void confirm(p.txRef)}>{busy===p.txRef?"Saving…":<> <CheckCircle2 size={14}/> Confirm receipt</>}</button>:<span className="payment-status">{p.status}</span>}</div>)}</section>
+}
