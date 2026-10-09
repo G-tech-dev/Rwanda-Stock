@@ -1,7 +1,7 @@
 import { getMongoClient, getDatabase } from "./mongodb";
 import type { SessionUser } from "./auth";
 export async function confirmManualPayment(txRef:string,trader:SessionUser){
- if(!/^RS-[a-f0-9-]{36}$/i.test(txRef))throw new Error("Invalid payment reference.");
+ if(!/^EP-[a-f0-9-]{36}$/i.test(txRef))throw new Error("Invalid payment reference.");
  const client=await getMongoClient(),db=await getDatabase(),session=client.startSession();
  let alreadyConfirmed=false;
  try{
