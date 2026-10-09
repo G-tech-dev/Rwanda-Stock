@@ -29,7 +29,7 @@ export async function POST(req:NextRequest){
    if(!Number.isSafeInteger(amountRwf)||amountRwf<100||amountRwf>10000000)return NextResponse.json({error:"Top-up must be between 100 and 10,000,000 RWF."},{status:400});
  }
  if(!Number.isSafeInteger(amountRwf)||amountRwf<1)return NextResponse.json({error:"Invalid amount."},{status:400});
- const txRef="RS-"+randomUUID(),now=new Date(),ussdCode=network==="mtn"?"*182#":"*182*8*1#";
+ const txRef="EP-"+randomUUID(),now=new Date(),ussdCode=network==="mtn"?"*182#":"*182*8*1#";
  const instructions=network==="mtn"
  ?["Dial *182# on the MTN MoMo phone.","Choose the appropriate merchant-payment option and enter the trader's merchant details.","Enter the exact amount and check the recipient name.","Enter your PIN only in the official MTN USSD menu.","Keep the MTN confirmation message and share the payment reference."]
  :["Dial *182*8*1# on the Airtel Money phone.","Follow the merchant-payment menu and enter the trader's merchant code.","Enter the exact amount and check the recipient name.","Enter your PIN only in the official Airtel USSD menu.","Keep the Airtel confirmation message and share the payment reference."];
