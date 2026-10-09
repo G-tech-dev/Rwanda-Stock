@@ -12,8 +12,6 @@ type CreatedPayment = { purpose: Purpose; txRef: string; amountRwf: number; netw
 export default function PaymentsPage() {
   const [purpose, setPurpose] = useState<Purpose>("sale");
   const [network, setNetwork] = useState<Network>("mtn");
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [orderId, setOrderId] = useState("");
   const [amountRwf, setAmountRwf] = useState("1000");
@@ -32,7 +30,7 @@ export default function PaymentsPage() {
       const response = await fetch("/api/payments/initialize", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ purpose, network, name, email, phone, ...(purpose === "sale" ? { orderId } : {}), ...(purpose === "wallet_topup" ? { amountRwf: Number(amountRwf) } : {}) })
+        body: JSON.stringify({ purpose, network, phone, ...(purpose === "sale" ? { orderId } : {}), ...(purpose === "wallet_topup" ? { amountRwf: Number(amountRwf) } : {}) })
       });
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || "Could not create payment instructions.");
@@ -66,7 +64,7 @@ export default function PaymentsPage() {
 
   return <MarketingLayout><main className="inner-page payments-page">
     <section className="inner-hero"><span className="section-kicker">RWANDA STOCK MOBILE MONEY</span><h1>Pay with <span>MTN or Airtel.</span></h1><p>Create a payment reference, open the mobile-money USSD menu on your phone, and follow the operator's instructions. The trader confirms receipt in Rwanda Stock after checking their mobile-money message or balance.</p><div className="payment-method-pills"><span><Smartphone size={16}/> MTN MoMo</span><span><Smartphone size={16}/> Airtel Money</span></div></section>
-    <section className="payment-layout">
+    <p className="payment-field-note">Sign in first. Customers can pay an existing order; traders can top up their wallet or pay a subscription.</p><section className="payment-layout">
       <form className="payment-form" onSubmit={submit}>
         <div className="payment-form-head"><span className="payment-secure-icon"><Wallet size={19}/></span><div><h2>Create payment reference</h2><p>No mobile-money PIN is requested or stored by Rwanda Stock.</p></div></div>
         <label htmlFor="payment-purpose">Payment type</label>
@@ -77,10 +75,6 @@ export default function PaymentsPage() {
         </select>
         <label htmlFor="payment-network">Mobile-money network</label>
         <select id="payment-network" value={network} onChange={e => setNetwork(e.target.value as Network)}><option value="mtn">MTN MoMo</option><option value="airtel">Airtel Money</option></select>
-        <label htmlFor="payment-name">Payer's full name</label>
-        <input id="payment-name" value={name} onChange={e => setName(e.target.value)} autoComplete="name" minLength={2} maxLength={100} placeholder="Full name" required/>
-        <label htmlFor="payment-email">Payer's email</label>
-        <input id="payment-email" type="email" value={email} onChange={e => setEmail(e.target.value)} autoComplete="email" maxLength={254} placeholder="you@example.com" required/>
         <label htmlFor="payment-phone">Mobile-money phone number</label>
         <input id="payment-phone" value={phone} onChange={e => setPhone(e.target.value)} inputMode="tel" placeholder="e.g. 078xxxxxxx" minLength={9} maxLength={16} required/>
         {purpose === "sale" && <><label htmlFor="payment-order">Existing order reference</label><input id="payment-order" value={orderId} onChange={e => setOrderId(e.target.value)} placeholder="Order ID" required/><p className="payment-field-note">The total is loaded from the saved order; you cannot change it here.</p></>}
