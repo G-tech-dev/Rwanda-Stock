@@ -69,7 +69,7 @@ export default function PaymentsPage() {
         <div className="payment-form-head"><span className="payment-secure-icon"><Wallet size={19}/></span><div><h2>Create payment reference</h2><p>No mobile-money PIN is requested or stored by EasyPay Rwanda.</p></div></div>
         <label htmlFor="payment-purpose">Payment type</label>
         <select id="payment-purpose" value={purpose} onChange={e => { setPurpose(e.target.value as Purpose); setError(""); setPayment(null); }}>
-          <option value="sale">Customer pays trader for an item</option>
+          <option value="sale">Customer pays a trader</option>
           <option value="wallet_topup">Trader wallet top-up</option>
           <option value="subscription">EasyPay Rwanda subscription</option>
         </select>
@@ -77,7 +77,7 @@ export default function PaymentsPage() {
         <select id="payment-network" value={network} onChange={e => setNetwork(e.target.value as Network)}><option value="mtn">MTN MoMo</option><option value="airtel">Airtel Money</option></select>
         <label htmlFor="payment-phone">Mobile-money phone number</label>
         <input id="payment-phone" value={phone} onChange={e => setPhone(e.target.value)} inputMode="tel" placeholder="e.g. 078xxxxxxx" minLength={9} maxLength={16} required/>
-        {purpose === "sale" && <><label htmlFor="payment-order">Existing order reference</label><input id="payment-order" value={orderId} onChange={e => setOrderId(e.target.value)} placeholder="Order ID" required/><p className="payment-field-note">The total is loaded from the saved order; you cannot change it here.</p></>}
+        {purpose === "sale" && <><label htmlFor="payment-order">Payment request reference</label><input id="payment-order" value={orderId} onChange={e => setOrderId(e.target.value)} placeholder="Payment reference" required/><p className="payment-field-note">The amount is loaded from the trader's saved payment request.</p></>}
         {purpose === "wallet_topup" && <><label htmlFor="payment-amount">Top-up amount (RWF)</label><input id="payment-amount" type="number" value={amountRwf} onChange={e => setAmountRwf(e.target.value)} min={100} max={10000000} step={1} required/></>}
         {error && <p className="payment-error" role="alert">{error}</p>}
         <button className="marketing-button payment-submit" type="submit" disabled={busy}>{busy ? "Creating reference…" : "Create payment instructions"} <ArrowRight size={16}/></button>
@@ -87,7 +87,7 @@ export default function PaymentsPage() {
     </section>
     {payment && <section className="payment-form payment-instructions">
       <div className="payment-form-head"><span className="payment-secure-icon"><Smartphone size={19}/></span><div><h2>Payment instructions</h2><p>Reference created; payment is still pending.</p></div></div>
-      <div className="payment-plan-summary"><div><strong>Amount</strong><span>{payment.purpose === "subscription" ? "Subscription" : payment.purpose === "wallet_topup" ? "Trader wallet top-up" : "Sales order"}</span></div><strong>{payment.amountRwf.toLocaleString()} RWF</strong></div>
+      <div className="payment-plan-summary"><div><strong>Amount</strong><span>{payment.purpose === "subscription" ? "Subscription" : payment.purpose === "wallet_topup" ? "Trader wallet top-up" : "Payment request"}</span></div><strong>{payment.amountRwf.toLocaleString()} RWF</strong></div>
       <p><strong>Reference:</strong> {payment.txRef}</p>
       <button type="button" className="marketing-button payment-submit" onClick={() => navigator.clipboard.writeText(payment.txRef)}><Copy size={16}/> Copy reference</button>
       <a className="marketing-button payment-submit" href={`tel:${payment.ussdCode.replace("#", "%23")}`}>Open {payment.network === "mtn" ? "MTN" : "Airtel"} USSD menu <ArrowRight size={16}/></a>
