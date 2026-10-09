@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowRight, BarChart3, BellRing, Boxes, ClipboardList, Package, Smartphone, Users, Utensils, Pill, Store, BriefcaseBusiness, Wallet } from "lucide-react";
+import { ArrowRight, BarChart3, BellRing, ClipboardList, Package, Smartphone, Users, Utensils, Pill, Store, BriefcaseBusiness } from "lucide-react";
 import { MarketingLayout } from "../components/marketing";
 
 const features = [
