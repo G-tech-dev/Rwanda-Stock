@@ -1,0 +1,7 @@
+import { NextRequest,NextResponse } from "next/server";
+import { randomUUID } from "node:crypto";
+import { getDatabase } from "@/lib/mongodb";
+import { requireUser } from "@/lib/auth";
+export const runtime="nodejs";
+export async function GET(){const {user,response}=await requireUser(["trader","admin"]);if(response)return response;const rows=await(await getDatabase()).collection("customers").find({businessId:user!.businessId}).sort({createdAt:-1}).limit(500).toArray();return NextResponse.json({customers:rows.map(({_id,...x})=>x)});}
+export async function POST(req:NextRequest){const {user,response}=await requireUser(["trader","admin"]);if(response)return response;try{const b=await req.json();const name=typeof b.name==="string"?b.name.trim():"";const phone=typeof b.phone==="string"?b.phone.trim():"";const email=typeof b.email==="string"?b.email.trim().toLowerCase():"";if(name.length<2||name.length>100||phone.length>20||email.length>254)return NextResponse.json({error:"Enter a valid customer name, phone and email."},{status:400});const customer={customerId:randomUUID(),businessId:user!.businessId,name,phone,email,createdAt:new Date()};await(await getDatabase()).collection("customers").insertOne(customer);const{_id,...result}=customer as typeof customer & {_id?:unknown};return NextResponse.json({customer:result},{status:201});}catch{return NextResponse.json({error:"Could not save customer."},{status:500});}}
