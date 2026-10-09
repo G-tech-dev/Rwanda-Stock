@@ -4,6 +4,7 @@ import { ArrowRight, Leaf } from "lucide-react";
 const links = [
   { href: "/features", label: "Features" },
   { href: "/pricing", label: "Pricing" },
+  { href: "/payments", label: "Payments" },
   { href: "/about", label: "About" },
   { href: "/contact", label: "Contact" },
 ];
