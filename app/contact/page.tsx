@@ -1,12 +1,13 @@
 "use client";
 
 import { useState } from "react";
+import type { FormEvent } from "react";
 import { Mail, MessageSquareText, Send } from "lucide-react";
 import { MarketingLayout } from "../components/marketing";
 
 export default function ContactPage() {
   const [sent, setSent] = useState(false);
-  function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+  function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setSent(true);
   }
