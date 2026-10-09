@@ -7,7 +7,7 @@ import { MarketingLayout } from "../components/marketing";
 
 type Purpose = "sale" | "wallet_topup" | "subscription";
 type Network = "mtn" | "airtel";
-type CreatedPayment = { txRef: string; amountRwf: number; network: Network; ussdCode: string; instructions: string[]; status: string };
+type CreatedPayment = { purpose: Purpose; txRef: string; amountRwf: number; network: Network; ussdCode: string; instructions: string[]; status: string };
 
 export default function PaymentsPage() {
   const [purpose, setPurpose] = useState<Purpose>("sale");
