@@ -28,7 +28,7 @@ Configure in Vercel Project Settings → Environment Variables, then redeploy:
 - `RS_BUSINESS_MONTHLY_PRICE_RWF` — monthly subscription price
 
 ## Important
-This is a backend MVP, not a fully audited production finance system. Before real-money production, add rate limiting, email verification/password reset, CSRF/origin protection, audit logs, reconciliation, refunds, MongoDB indexes, and preferably a transaction-capable MongoDB replica set for stock/payment atomicity. The existing marketing dashboard is still a demo UI and is not yet wired to these APIs. Subscription access enforcement, offline sync, and actual MTN/Airtel API prompts are not implemented.
+This is a backend MVP, not a fully audited production finance system. Before real-money production, add rate limiting, email verification/password reset, CSRF/origin protection, audit logs, reconciliation, refunds, MongoDB indexes, and a MongoDB Atlas deployment or replica set for payment transactions. The payment settlement endpoint uses MongoDB transactions, so a standalone MongoDB server is not sufficient. The existing marketing dashboard is still a demo UI and is not yet wired to these APIs. Subscription access enforcement, offline sync, and actual MTN/Airtel API prompts are not implemented.
 
 ## Local development
 ```bash
