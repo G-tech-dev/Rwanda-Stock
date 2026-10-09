@@ -23,7 +23,7 @@ export default async function WorkspacePage() {
     db.collection("trader_wallets").findOne({ businessId }),
     db.collection("orders").countDocuments({ businessId, paymentStatus: "pending" }),
     db.collection("orders").aggregate([
-      { $match: { businessId, paymentStatus: "paid" } },
+      { $match: { businessId, paymentStatus: "trader_confirmed" } },
       { $group: { _id: null, total: { $sum: "$totalRwf" } } }
     ]).toArray()
   ]);
