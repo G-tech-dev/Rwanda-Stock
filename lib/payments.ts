@@ -2,23 +2,7 @@ import { timingSafeEqual } from "node:crypto";
 import { ObjectId } from "mongodb";
 import { getDatabase } from "./mongodb";
 
-export type PaymentPurpose = "sale" | "subscription";
-type PaymentDocument = {
-  _id?: ObjectId;
-  txRef: string;
-  purpose: PaymentPurpose;
-  status: "pending" | "paid" | "failed";
-  amountRwf: number;
-  currency: "RWF";
-  email: string;
-  name: string;
-  orderId?: string;
-  planId?: string;
-  providerTransactionId?: string;
-  createdAt: Date;
-  updatedAt: Date;
-  paidAt?: Date;
-};
+export type PaymentPurpose = "sale" | "wallet_topup" | "subscription";
 
 export function constantTimeEqual(a: string, b: string): boolean {
   const left = Buffer.from(a);
@@ -26,62 +10,68 @@ export function constantTimeEqual(a: string, b: string): boolean {
   return left.length === right.length && timingSafeEqual(left, right);
 }
 
-export async function verifyAndRecordPayment(txRef: string, transactionId: string) {
-  const secretKey = process.env.FLW_SECRET_KEY;
-  if (!secretKey) throw new Error("FLW_SECRET_KEY is not configured.");
-  if (!/^[a-zA-Z0-9_-]{8,100}$/.test(txRef)) throw new Error("Invalid transaction reference.");
-  if (!/^\d{1,20}$/.test(transactionId)) throw new Error("Invalid provider transaction ID.");
-
-  const db = await getDatabase();
-  const payments = db.collection<PaymentDocument>("payments");
-  const payment = await payments.findOne({ txRef });
-  if (!payment) throw new Error("Payment reference was not found.");
-  if (payment.status === "paid") return { status: "successful", purpose: payment.purpose };
-
-  const response = await fetch(`https://api.flutterwave.com/v3/transactions/${transactionId}/verify`, {
-    headers: { Authorization: `Bearer ${secretKey}`, Accept: "application/json" },
-    cache: "no-store"
-  });
-  if (!response.ok) throw new Error("Payment provider verification failed.");
-  const result = await response.json();
-  const transaction = result?.data;
-  if (result?.status !== "success" || !transaction) throw new Error("Payment could not be verified.");
-
-  const valid = transaction.tx_ref === payment.txRef
-    && transaction.status === "successful"
-    && transaction.currency === payment.currency
-    && Number(transaction.amount) >= payment.amountRwf;
-
-  if (!valid) {
-    if (transaction.tx_ref === payment.txRef && ["failed", "cancelled"].includes(String(transaction.status))) {
-      await payments.updateOne({ txRef, status: "pending" }, { $set: { status: "failed", updatedAt: new Date() } });
-    }
-    return { status: "not_paid", purpose: payment.purpose };
+/**
+ * Manual trader confirmation is an assertion that the trader checked the operator's receipt.
+ * It is NOT independent verification from MTN/Airtel. Replace the shared confirmation code
+ * with per-user authentication/authorization before public production use.
+ */
+export async function confirmManualPayment(txRef: string, confirmationSecret: string) {
+  const expected = process.env.RS_TRADER_CONFIRMATION_SECRET;
+  if (!expected) throw new Error("Trader confirmation is not configured.");
+  if (!confirmationSecret || !constantTimeEqual(confirmationSecret, expected)) {
+    const error = new Error("Invalid trader confirmation code.");
+    Object.assign(error, { statusCode: 401 });
+    throw error;
   }
+  if (!/^RS-[a-f0-9-]{36}$/i.test(txRef)) throw new Error("Invalid payment reference.");
+  const db = await getDatabase();
+  const payments = db.collection("payments");
+  const payment = await payments.findOne({ txRef });
+  if (!payment) {
+    const error = new Error("Payment reference not found.");
+    Object.assign(error, { statusCode: 404 });
+    throw error;
+  }
+  if (payment.status === "trader_confirmed") return { status: "trader_confirmed", txRef };
+  if (payment.status !== "pending") throw new Error("This payment is not pending confirmation.");
 
   const now = new Date();
   const updated = await payments.updateOne(
     { txRef, status: "pending" },
-    { $set: { status: "paid", providerTransactionId: String(transaction.id), paidAt: now, updatedAt: now } }
+    { $set: { status: "trader_confirmed", traderConfirmedAt: now, updatedAt: now, confirmationMethod: "manual_trader_confirmation" } }
   );
+  if (updated.modifiedCount !== 1) {
+    const latest = await payments.findOne({ txRef });
+    if (latest?.status === "trader_confirmed") return { status: "trader_confirmed", txRef };
+    throw new Error("Payment status changed; refresh and check the record.");
+  }
 
-  // Fulfilment is idempotent. Sales orders must already exist and remain unpaid.
-  if (payment.purpose === "sale" && payment.orderId) {
-    await db.collection("orders").updateOne(
-      { _id: new ObjectId(payment.orderId), paymentStatus: { $ne: "paid" } },
-      { $set: { paymentStatus: "paid", paymentReference: txRef, paidAt: now, updatedAt: now } }
-    );
-  } else if (payment.purpose === "subscription" && payment.planId && updated.modifiedCount === 1) {
-    // This records the paid subscription; authentication/tenant ownership must be added before using it to gate access.
-    await db.collection("subscriptions").updateOne(
-      { email: payment.email.toLowerCase(), planId: payment.planId },
+  // Credit wallet only after the trader's manual assertion; idempotent because status transition above is atomic.
+  if (payment.purpose === "wallet_topup") {
+    await db.collection("trader_wallets").updateOne(
+      { email: String(payment.email).toLowerCase() },
       {
-        $set: { email: payment.email.toLowerCase(), name: payment.name, planId: payment.planId, status: "active", lastPaymentReference: txRef, updatedAt: now },
+        $inc: { balanceRwf: Number(payment.amountRwf) },
+        $set: { updatedAt: now },
+        $setOnInsert: { email: String(payment.email).toLowerCase(), createdAt: now }
+      },
+      { upsert: true }
+    );
+  } else if (payment.purpose === "sale" && payment.orderId && ObjectId.isValid(String(payment.orderId))) {
+    await db.collection("orders").updateOne(
+      { _id: new ObjectId(String(payment.orderId)), paymentStatus: { $nin: ["paid", "trader_confirmed"] } },
+      { $set: { paymentStatus: "trader_confirmed", paymentReference: txRef, traderConfirmedAt: now, updatedAt: now } }
+    );
+  } else if (payment.purpose === "subscription") {
+    await db.collection("subscriptions").updateOne(
+      { email: String(payment.email).toLowerCase(), planId: "business_monthly" },
+      {
+        $set: { email: String(payment.email).toLowerCase(), planId: "business_monthly", status: "trader_confirmed", lastPaymentReference: txRef, updatedAt: now },
         $setOnInsert: { createdAt: now },
         $max: { paidThrough: new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000) }
       },
       { upsert: true }
     );
   }
-  return { status: "successful", purpose: payment.purpose };
+  return { status: "trader_confirmed", txRef, note: "Manual trader confirmation; not independently verified by the mobile-money operator." };
 }
