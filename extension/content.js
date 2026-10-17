@@ -1,7 +1,7 @@
 (() => {
   // Roulette result elements are rendered inside the GrooveGaming game frame.
   // Keep this script inactive in the surrounding Winner page and unrelated frames.
-  if (location.hostname !== "gprouter.groovegaming.com") return;
+  if (!(location.hostname === "groovegaming.com" || location.hostname.endsWith(".groovegaming.com"))) return;
   if (globalThis.__rouletteTrackerInstalled) return;
   globalThis.__rouletteTrackerInstalled = true;
 
