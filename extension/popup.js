@@ -13,7 +13,7 @@ let lastScanStatus = "";
 function classify(raw) {
   const value = String(raw).trim().toUpperCase();
   if (value === "00") return wheel.value === "american" ? "zero" : null;
-  if (!/^\\d{1,2}$/.test(value)) return null;
+  if (!/^\d{1,2}$/.test(value)) return null;
   const number = Number(value);
   if (number < 0 || number > 36) return null;
   if (number === 0) return "zero";
@@ -22,7 +22,7 @@ function classify(raw) {
 function valid(raw) {
   const value = String(raw).trim().toUpperCase();
   if (value === "00") return wheel.value === "american";
-  return /^\\d{1,2}$/.test(value) && Number(value) >= 0 && Number(value) <= 36;
+  return /^\d{1,2}$/.test(value) && Number(value) >= 0 && Number(value) <= 36;
 }
 function key(raw) { return String(raw).trim().toUpperCase(); }
 function percent(count, total) { return total ? (count / total * 100).toFixed(1) + "%" : "0%"; }
