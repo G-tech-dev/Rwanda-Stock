@@ -42,6 +42,34 @@ function render() {
     ? "European wheel baseline: 18/37 (48.65%) even, 18/37 (48.65%) odd, and 1/37 (2.70%) zero."
     : "American wheel baseline: 18/38 (47.37%) even, 18/38 (47.37%) odd, and 2/38 (5.26%) zero pockets (0 and 00).";
   $("streak").textContent = streakText();
+
+  const sample = results.slice(-20);
+  const sampleCounts = {even:0, odd:0, zero:0};
+  sample.forEach((r) => {
+    const outcome = classify(r);
+    if (outcome) sampleCounts[outcome]++;
+  });
+  const estimate = $("estimate");
+  const estimateDetail = $("estimateDetail");
+  if (estimate && estimateDetail) {
+    if (sample.length < 5) {
+      estimate.textContent = "Not enough results yet (record at least 5).";
+      estimateDetail.textContent = "This is a summary of recent outcomes, not a reliable prediction of the next spin.";
+    } else {
+      const parityTotal = sampleCounts.even + sampleCounts.odd;
+      let trend = "No clear even/odd lean in the last " + sample.length + " results.";
+      if (parityTotal && sampleCounts.even / parityTotal >= 0.60) {
+        trend = "Recent sample has more even results (" + sampleCounts.even + "/" + parityTotal + ").";
+      } else if (parityTotal && sampleCounts.odd / parityTotal >= 0.60) {
+        trend = "Recent sample has more odd results (" + sampleCounts.odd + "/" + parityTotal + ").";
+      }
+      estimate.textContent = trend;
+      const evenRate = parityTotal ? (sampleCounts.even / parityTotal * 100).toFixed(1) : "0.0";
+      const oddRate = parityTotal ? (sampleCounts.odd / parityTotal * 100).toFixed(1) : "0.0";
+      estimateDetail.textContent = "Last " + sample.length + " recorded: even " + evenRate +
+        "%, odd " + oddRate + "%; zero " + sampleCounts.zero + ". European-wheel baseline: 48.65% even, 48.65% odd, 2.70% zero. Spins are independent; this trend does not improve the odds.";
+    }
+  }
 }
 function streakText() {
   if (!results.length) return "Current streak: none yet.";
