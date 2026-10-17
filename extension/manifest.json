@@ -1,0 +1,11 @@
+{
+  "manifest_version": 3,
+  "name": "Roulette Even/Odd Tracker",
+  "version": "1.0.0",
+  "description": "Track roulette results and review even/odd frequencies locally. Not a prediction tool.",
+  "permissions": ["storage"],
+  "action": {
+    "default_title": "Roulette Even/Odd Tracker",
+    "default_popup": "popup.html"
+  }
+}
