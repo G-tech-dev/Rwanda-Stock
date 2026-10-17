@@ -78,17 +78,27 @@ scanButton.addEventListener("click", async () => {
       return;
     }
     const frames = await chrome.webNavigation.getAllFrames({tabId:tab.id});
-    const gameFrames = (frames || []).filter(frame =>
-      typeof frame.url === "string" &&
-      frame.url.startsWith("https://gprouter.groovegaming.com/")
-    );
-    if (!gameFrames.length) {
-      scanStatus.textContent = "Could not find the GrooveGaming game frame. Reload the Winner page and try again.";
+    const allFrames = frames || [];
+    const gameFrames = allFrames.filter(frame => {
+      try {
+        return new URL(frame.url).hostname.endsWith("groovegaming.com");
+      } catch {
+        return false;
+      }
+    });
+    // Try the detected game frames first. If the provider changes its frame
+    // hostname, probe the remaining frames too; only the injected game script
+    // will respond to the scan message.
+    const framesToTry = [...gameFrames, ...allFrames.filter(frame =>
+      !gameFrames.some(gameFrame => gameFrame.frameId === frame.frameId)
+    )];
+    if (!framesToTry.length) {
+      scanStatus.textContent = "No page frames are available yet. Reload Winner Auto Roulette, wait for the game to load, then scan again.";
       return;
     }
     let response = null;
     let lastError = null;
-    for (const frame of gameFrames) {
+    for (const frame of framesToTry) {
       try {
         const result = await chrome.tabs.sendMessage(
           tab.id,
