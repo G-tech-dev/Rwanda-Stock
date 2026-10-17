@@ -77,8 +77,37 @@ scanButton.addEventListener("click", async () => {
       scanStatus.textContent = "Open the Winner Auto Roulette recently-played page in this tab, then scan again.";
       return;
     }
-    const response = await chrome.tabs.sendMessage(tab.id,{type:"ROULETTE_SCAN_NOW"});
-    scanStatus.textContent = response?.message || "No readable roulette result was found. The page may render results inside a canvas or external frame.";
+    const frames = await chrome.webNavigation.getAllFrames({tabId:tab.id});
+    const gameFrames = (frames || []).filter(frame =>
+      typeof frame.url === "string" &&
+      frame.url.startsWith("https://gprouter.groovegaming.com/")
+    );
+    if (!gameFrames.length) {
+      scanStatus.textContent = "Could not find the GrooveGaming game frame. Reload the Winner page and try again.";
+      return;
+    }
+    let response = null;
+    let lastError = null;
+    for (const frame of gameFrames) {
+      try {
+        const result = await chrome.tabs.sendMessage(
+          tab.id,
+          {type:"ROULETTE_SCAN_NOW"},
+          {frameId:frame.frameId}
+        );
+        if (result?.ok) {
+          response = result;
+          break;
+        }
+        if (result) response = result;
+      } catch (error) {
+        lastError = error;
+      }
+    }
+    scanStatus.textContent = response?.message ||
+      (lastError
+        ? "Could not contact the game frame. Reload the Winner page after updating the extension."
+        : "No readable roulette results were found inside the game frame.");
     await load();
   } catch (error) {
     scanStatus.textContent = "Could not scan this page. Reload the webpage after updating the extension, then try again.";
