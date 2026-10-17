@@ -20,7 +20,13 @@
   function readVisibleResults() {
     return [...document.querySelectorAll(selector)]
       .filter(visible)
-      .map(el => (el.innerText || el.textContent || "").trim().toUpperCase())
+      // Prefer the nested number span used by Winner's result markup.
+      // Fall back to the full element text if the nested structure changes.
+      .map(el => {
+        const numberNode = el.querySelector(".Ui_Uk > span, .Ui_Uk span");
+        return (numberNode?.textContent || el.innerText || el.textContent || "")
+          .trim().toUpperCase();
+      })
       .filter(value => validNumber.test(value));
   }
 
