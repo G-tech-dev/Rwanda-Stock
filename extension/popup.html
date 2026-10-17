@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Roulette Tracker</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <main>
+    <header><span class="mark">R</span><div><h1>Roulette Tracker</h1><p>History · not predictions</p></div></header>
+    <label for="wheel">Wheel type</label>
+    <select id="wheel"><option value="european">European · 0–36</option><option value="american">American · 0, 00, 1–36</option></select>
+    <label for="result">Record a result</label>
+    <div class="entry"><input id="result" placeholder="Enter 0–36 or 00" autocomplete="off"><button id="add">Add</button></div>
+    <p id="message" role="status"></p>
+    <section class="stats">
+      <article><span>Even</span><strong id="evenCount">0</strong><small id="evenPct">0%</small></article>
+      <article><span>Odd</span><strong id="oddCount">0</strong><small id="oddPct">0%</small></article>
+      <article><span>Zero</span><strong id="zeroCount">0</strong><small id="zeroPct">0%</small></article>
+    </section>
+    <section class="panel"><div class="panel-head"><h2>Recent results</h2><button id="clear" class="quiet">Clear history</button></div><p id="history" class="history">No results recorded yet.</p></section>
+    <section class="panel"><h2>What the history means</h2><p id="baseline"></p><p id="streak"></p><p class="warning">Past spins do not predict the next spin. Each spin is independent; don't stake money based on streaks or percentages.</p></section>
+    <footer>Results are stored in this browser using extension storage. No AI, account, or remote API.</footer>
+  </main>
+  <script src="popup.js"></script>
+</body>
+</html>
