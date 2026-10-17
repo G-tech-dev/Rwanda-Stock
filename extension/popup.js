@@ -81,13 +81,21 @@ function streakText() {
   }
   return "Latest recorded streak: " + count + " " + (last || "unknown") + (count === 1 ? " result" : " results") + ". Descriptive only.";
 }
-async function load() {
+async function load(detectActivePage = false) {
   const saved = await chrome.storage.local.get(["rouletteResults","rouletteWheel","rouletteAuto","rouletteLastScanSignature","rouletteScanStatus"]);
   results = Array.isArray(saved.rouletteResults) ? saved.rouletteResults : [];
   if (saved.rouletteWheel === "american") wheel.value = "american";
   autoToggle.checked = saved.rouletteAuto === true;
   scanStatus.textContent = saved.rouletteScanStatus || "Ready. Open the Winner Auto Roulette page to scan.";
   render();
+  if (detectActivePage) {
+    const tab = await activeTab().catch(() => null);
+    if (tab && isWinnerRouletteUrl(tab.url || "")) {
+      scanStatus.textContent = "Winner Auto Roulette page detected in the active tab. Click Scan page now.";
+    } else if (tab?.url) {
+      scanStatus.textContent = "Winner Auto Roulette not detected in the active tab. Open its recently-played page to scan.";
+    }
+  }
 }
 async function save() {
   await chrome.storage.local.set({rouletteResults:results,rouletteWheel:wheel.value});
@@ -206,4 +214,4 @@ chrome.storage.onChanged.addListener((changes, area) => {
   }
   if (changes.rouletteScanStatus) scanStatus.textContent = changes.rouletteScanStatus.newValue || "";
 });
-load().catch(() => { message.textContent = "Could not load local history."; render(); });
+load(true).catch(() => { message.textContent = "Could not load local history."; render(); });
