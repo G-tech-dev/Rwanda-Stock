@@ -10,7 +10,7 @@
   ],
   "host_permissions": [
     "https://winner.rw/en/virtual/recently-played/autoroulette-1*",
-    "https://gprouter.groovegaming.com/*"
+    "https://*.groovegaming.com/*"
   ],
   "action": {
     "default_title": "Roulette Even/Odd Tracker",
