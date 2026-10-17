@@ -1,7 +1,11 @@
 (() => {
-  // Roulette result elements are rendered inside the GrooveGaming game frame.
-  // Keep this script inactive in the surrounding Winner page and unrelated frames.
-  if (!(location.hostname === "groovegaming.com" || location.hostname.endsWith(".groovegaming.com"))) return;
+  // Run in the Winner roulette page and GrooveGaming frames. The parent page
+  // can also answer scan requests if the result elements are rendered there.
+  const host = location.hostname;
+  const isGameHost = host === "groovegaming.com" || host.endsWith(".groovegaming.com");
+  const isWinnerRoulettePage = host === "winner.rw" &&
+    /recently-played|autoroulette|auto-roulette/i.test(location.pathname);
+  if (!isGameHost && !isWinnerRoulettePage) return;
   if (globalThis.__rouletteTrackerInstalled) return;
   globalThis.__rouletteTrackerInstalled = true;
 
@@ -33,7 +37,7 @@
   async function performScan(manual) {
     const current = readVisibleResults();
     if (!current.length) {
-      const message = "Game frame loaded, but no visible single-result numbers were found. Wait for the result history to appear and scan again.";
+      const message = "No visible single-result numbers were found in this frame. The game may render results in another frame; scan again after the result list appears.";
       await chrome.storage.local.set({rouletteScanStatus:message});
       return {ok:false,message};
     }
