@@ -1,0 +1,9 @@
+{
+  "name": "roulette-even-odd-edge",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Local-first Microsoft Edge extension for roulette outcome statistics",
+  "scripts": {
+    "dev": "vercel dev"
+  }
+}
