@@ -1,110 +1,138 @@
 (() => {
+  // Roulette result elements are rendered inside the GrooveGaming game frame.
+  // Keep this script inactive in the surrounding Winner page and unrelated frames.
+  if (location.hostname !== "gprouter.groovegaming.com") return;
   if (globalThis.__rouletteTrackerInstalled) return;
   globalThis.__rouletteTrackerInstalled = true;
 
-  const relevant = /result|roulette|history|recent|outcome|last.?number|winning.?number|spin.?number|number.?history/i;
-  const exactNumber = /^(00|0|[1-9]|[12][0-9]|3[0-6])$/;
-  let lastLocalSignature = "";
+  const selector = '[data-testid="single-result"]';
+  const validNumber = /^(00|0|[1-9]|[12][0-9]|3[0-6])$/;
   let scanTimer = null;
+  let scanPromise = null;
 
   function visible(el) {
-    if (!(el instanceof Element)) return false;
     const style = getComputedStyle(el);
     const rect = el.getBoundingClientRect();
     return style.display !== "none" && style.visibility !== "hidden" &&
       Number(style.opacity || 1) > 0 && rect.width > 0 && rect.height > 0;
   }
-  function metadata(el) {
-    return [el.id, el.className, el.getAttribute("aria-label"), el.getAttribute("title"),
-      el.getAttribute("data-testid"), el.getAttribute("data-test"), el.getAttribute("role")]
-      .filter(v => typeof v === "string").join(" ");
+
+  function readVisibleResults() {
+    return [...document.querySelectorAll(selector)]
+      .filter(visible)
+      .map(el => (el.innerText || el.textContent || "").trim().toUpperCase())
+      .filter(value => validNumber.test(value));
   }
-  function candidateElements() {
-    const all = Array.from(document.querySelectorAll("body *")).filter(visible);
-    return all.map(el => {
-      const meta = metadata(el);
-      const text = (el.innerText || el.textContent || "").trim();
-      if (!relevant.test(meta) || !text || text.length > 120) return null;
-      const directText = Array.from(el.childNodes).filter(n => n.nodeType === Node.TEXT_NODE)
-        .map(n => n.textContent.trim()).filter(Boolean).join(" ").trim();
-      const value = exactNumber.test(text) ? text : exactNumber.test(directText) ? directText : null;
-      if (!value) return null;
-      const childHasCandidate = Array.from(el.children).some(child => {
-        const t = (child.innerText || child.textContent || "").trim();
-        return exactNumber.test(t);
-      });
-      if (childHasCandidate) return null;
-      let score = 0;
-      if (/result|winning.?number|outcome/i.test(meta)) score += 5;
-      if (/recent|history|last.?number|roulette/i.test(meta)) score += 3;
-      if (text.length <= 2) score += 2;
-      return {value:value.toUpperCase(),score,el,meta,text};
-    }).filter(Boolean).sort((a,b) => b.score-a.score);
-  }
-  function findResult() {
-    const candidates = candidateElements();
-    if (!candidates.length) return null;
-    const c = candidates[0];
-    let context = c.el;
-    for (let i=0;i<4 && context.parentElement;i++) {
-      const parent = context.parentElement;
-      if (relevant.test(metadata(parent)) && (parent.innerText || "").length < 500) context = parent;
-      else break;
-    }
-    const contextText = (context.innerText || context.textContent || "").trim().slice(0,500);
-    const signature = [location.pathname, metadata(context), contextText].join("|");
-    return {value:c.value,signature,source:metadata(c.el).slice(0,100)};
-  }
-  async function saveDetected(manual) {
-    const found = findResult();
-    if (!found) {
-      const message = "No result found in readable result/history elements. If the game is rendered in an external frame or canvas, this scanner cannot read it.";
+
+  async function performScan(manual) {
+    const current = readVisibleResults();
+    if (!current.length) {
+      const message = "Game frame loaded, but no visible single-result numbers were found. Wait for the result history to appear and scan again.";
       await chrome.storage.local.set({rouletteScanStatus:message});
       return {ok:false,message};
     }
-    const saved = await chrome.storage.local.get(["rouletteResults","rouletteWheel","rouletteLastScanSignature"]);
-    const priorSignature = saved.rouletteLastScanSignature || "";
-    if (found.signature === priorSignature) {
-      const message = "Latest visible result is " + found.value + ", already recorded; no duplicate added.";
-      await chrome.storage.local.set({rouletteScanStatus:message});
-      return {ok:true,message,value:found.value,duplicate:true};
-    }
+
+    const saved = await chrome.storage.local.get([
+      "rouletteResults","rouletteWheel","rouletteVisibleSnapshot"
+    ]);
     const wheel = saved.rouletteWheel === "american" ? "american" : "european";
-    if (found.value === "00" && wheel !== "american") {
-      const message = "Detected 00, but the tracker is set to European roulette. Change the wheel type to American to record it.";
+    const usable = current.filter(value => value !== "00" || wheel === "american");
+    if (!usable.length) {
+      const message = "Visible results do not match the selected wheel type. Check the wheel setting.";
       await chrome.storage.local.set({rouletteScanStatus:message});
       return {ok:false,message};
     }
-    const results = Array.isArray(saved.rouletteResults) ? saved.rouletteResults.slice() : [];
-    results.push(found.value);
-    if (results.length > 500) results.splice(0,results.length-500);
-    const message = (manual ? "Manual scan" : "Auto-detected") + ": saved result " + found.value + ".";
+
+    const previous = Array.isArray(saved.rouletteVisibleSnapshot)
+      ? saved.rouletteVisibleSnapshot : null;
+    const results = Array.isArray(saved.rouletteResults)
+      ? saved.rouletteResults.slice() : [];
+
+    // The site's list is newest-first. On the first scan, import the visible
+    // history oldest-to-newest so the popup's newest-first display stays correct.
+    if (!previous) {
+      for (const value of usable.slice().reverse()) results.push(value);
+      const message = (manual ? "Manual scan" : "Auto-detected") +
+        ": imported " + usable.length + " visible results. Newest visible: " + usable[0] + ".";
+      await chrome.storage.local.set({
+        rouletteResults: results.slice(-500),
+        rouletteVisibleSnapshot: usable,
+        rouletteScanStatus: message
+      });
+      return {ok:true,message,count:usable.length};
+    }
+
+    // Match the end of the current newest-first list to the beginning of the
+    // previous list. Any prefix before that overlap contains new spins.
+    let overlap = 0;
+    const maxOverlap = Math.min(usable.length, previous.length);
+    for (let length = maxOverlap; length > 0; length--) {
+      const suffix = usable.slice(usable.length - length);
+      if (suffix.every((value, index) => value === previous[index])) {
+        overlap = length;
+        break;
+      }
+    }
+
+    if (overlap === 0) {
+      const message = "The visible result list changed, but no overlap with the last scan was found. No numbers were added to avoid recording uncertain results. The baseline was refreshed.";
+      await chrome.storage.local.set({
+        rouletteVisibleSnapshot: usable,
+        rouletteScanStatus: message
+      });
+      return {ok:false,message};
+    }
+
+    const newCount = usable.length - overlap;
+    if (newCount > 0) {
+      // Current list is newest-first; append new results in chronological order.
+      for (const value of usable.slice(0,newCount).reverse()) results.push(value);
+    }
+    const message = newCount
+      ? (manual ? "Manual scan" : "Auto-detected") + ": saved " + newCount +
+        " new result" + (newCount === 1 ? "" : "s") + ". Newest: " + usable[0] + "."
+      : "No new roulette results detected. Latest visible: " + usable[0] + ".";
     await chrome.storage.local.set({
-      rouletteResults:results,
-      rouletteLastScanSignature:found.signature,
-      rouletteScanStatus:message
+      rouletteResults: results.slice(-500),
+      rouletteVisibleSnapshot: usable,
+      rouletteScanStatus: message
     });
-    lastLocalSignature = found.signature;
-    return {ok:true,message,value:found.value};
+    return {ok:true,message,count:newCount};
   }
-  chrome.runtime.onMessage.addListener((request,sender,sendResponse) => {
+
+  function saveDetected(manual) {
+    if (scanPromise) return scanPromise;
+    scanPromise = performScan(manual)
+      .catch(async () => {
+        const message = "Scan failed inside the game frame. Reload the Winner page and try again.";
+        await chrome.storage.local.set({rouletteScanStatus:message});
+        return {ok:false,message};
+      })
+      .finally(() => { scanPromise = null; });
+    return scanPromise;
+  }
+
+  chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     if (request?.type === "ROULETTE_SCAN_NOW") {
-      saveDetected(true).then(sendResponse).catch(() => sendResponse({ok:false,message:"Scan failed. Reload the page and try again."}));
+      saveDetected(true).then(sendResponse);
       return true;
     }
   });
+
   function scheduleScan() {
     chrome.storage.local.get(["rouletteAuto"]).then(saved => {
       if (saved.rouletteAuto !== true) return;
       if (scanTimer) clearTimeout(scanTimer);
-      scanTimer = setTimeout(() => {
-        saveDetected(false).catch(() => {});
-      },700);
+      scanTimer = setTimeout(() => saveDetected(false), 700);
     }).catch(() => {});
   }
+
   const observer = new MutationObserver(scheduleScan);
-  observer.observe(document.documentElement,{subtree:true,childList:true,characterData:true,attributes:true,attributeFilter:["class","aria-label","title","data-testid"]});
-  chrome.storage.onChanged.addListener((changes,area) => {
+  observer.observe(document.documentElement, {
+    subtree:true, childList:true, characterData:true, attributes:true,
+    attributeFilter:["class","aria-label","title","data-testid"]
+  });
+  chrome.storage.onChanged.addListener((changes, area) => {
     if (area === "local" && changes.rouletteAuto?.newValue === true) scheduleScan();
   });
   chrome.storage.local.get(["rouletteAuto"]).then(saved => {
