@@ -96,20 +96,32 @@ async function activeTab() {
   const tabs = await chrome.tabs.query({active:true,currentWindow:true});
   return tabs[0];
 }
+function isWinnerRouletteUrl(rawUrl) {
+  try {
+    const url = new URL(rawUrl);
+    return url.protocol === "https:" &&
+      url.hostname === "winner.rw" &&
+      /recently-played/i.test(url.pathname) &&
+      /(auto-?roulette|roulette)/i.test(url.pathname);
+  } catch {
+    return false;
+  }
+}
 scanButton.addEventListener("click", async () => {
   scanButton.disabled = true;
   scanStatus.textContent = "Scanning the active tab…";
   try {
     const tab = await activeTab();
-    if (!tab?.id || !tab.url?.startsWith("https://winner.rw/en/virtual/recently-played/autoroulette-1")) {
-      scanStatus.textContent = "Open the Winner Auto Roulette recently-played page in this tab, then scan again.";
+    if (!tab?.id || !isWinnerRouletteUrl(tab.url || "")) {
+      scanStatus.textContent = "This tab is not recognized as Winner Auto Roulette. Open the recently-played Auto Roulette page, then click Scan page now. Current tab: " + (tab?.url || "URL unavailable");
       return;
     }
     const frames = await chrome.webNavigation.getAllFrames({tabId:tab.id});
     const allFrames = frames || [];
     const gameFrames = allFrames.filter(frame => {
       try {
-        return new URL(frame.url).hostname.endsWith("groovegaming.com");
+        const host = new URL(frame.url).hostname;
+        return host === "groovegaming.com" || host.endsWith(".groovegaming.com");
       } catch {
         return false;
       }
@@ -121,7 +133,7 @@ scanButton.addEventListener("click", async () => {
       !gameFrames.some(gameFrame => gameFrame.frameId === frame.frameId)
     )];
     if (!framesToTry.length) {
-      scanStatus.textContent = "No page frames are available yet. Reload Winner Auto Roulette, wait for the game to load, then scan again.";
+      scanStatus.textContent = "Winner page detected, but it has no frames yet. Wait for the game to load, then scan again.";
       return;
     }
     let response = null;
