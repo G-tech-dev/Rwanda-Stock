@@ -1,11 +1,17 @@
 {
   "manifest_version": 3,
   "name": "Roulette Even/Odd Tracker",
-  "version": "1.0.0",
-  "description": "Track roulette results and review even/odd frequencies locally. Not a prediction tool.",
-  "permissions": ["storage"],
+  "version": "1.1.0",
+  "description": "Track roulette results locally and scan the Winner Auto Roulette recent-results page.",
+  "permissions": ["storage", "activeTab"],
+  "host_permissions": ["https://winner.rw/en/virtual/recently-played/autoroulette-1*"],
   "action": {
     "default_title": "Roulette Even/Odd Tracker",
     "default_popup": "popup.html"
-  }
+  },
+  "content_scripts": [{
+    "matches": ["https://winner.rw/en/virtual/recently-played/autoroulette-1*"],
+    "js": ["content.js"],
+    "run_at": "document_idle"
+  }]
 }
