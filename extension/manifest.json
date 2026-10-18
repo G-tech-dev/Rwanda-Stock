@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Roulette Even/Odd Tracker",
-  "version": "1.4.0",
+  "version": "1.5.0",
   "description": "Track roulette results locally and scan the Winner Auto Roulette recent-results page.",
   "permissions": [
     "storage",
@@ -10,7 +10,8 @@
   ],
   "host_permissions": [
     "https://winner.rw/*",
-    "https://*.groovegaming.com/*"
+    "https://*.groovegaming.com/*",
+    "https://client.pragmaticplaylive.net/*"
   ],
   "action": {
     "default_title": "Roulette Even/Odd Tracker",
@@ -20,7 +21,8 @@
     {
       "matches": [
         "https://winner.rw/*",
-        "https://*.groovegaming.com/*"
+        "https://*.groovegaming.com/*",
+        "https://client.pragmaticplaylive.net/*"
       ],
       "js": [
         "content.js"
