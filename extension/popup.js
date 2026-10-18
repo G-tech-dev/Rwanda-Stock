@@ -129,12 +129,12 @@ scanButton.addEventListener("click", async () => {
     const gameFrames = allFrames.filter(frame => {
       try {
         const host = new URL(frame.url).hostname;
-        return host === "groovegaming.com" || host.endsWith(".groovegaming.com");
+        return host === "client.pragmaticplaylive.net" || host === "groovegaming.com" || host.endsWith(".groovegaming.com");
       } catch {
         return false;
       }
     });
-    // Try the detected game frames first. If the provider changes its frame
+    // Try the known Pragmatic Play and GrooveGaming frames first. If the provider changes its frame
     // hostname, probe the remaining frames too; only the injected game script
     // will respond to the scan message.
     const framesToTry = [...gameFrames, ...allFrames.filter(frame =>
