@@ -2,7 +2,7 @@
   // Run in the Winner roulette page and GrooveGaming frames. The parent page
   // can also answer scan requests if the result elements are rendered there.
   const host = location.hostname;
-  const isGameHost = host === "groovegaming.com" || host.endsWith(".groovegaming.com");
+  const isGameHost = host === "groovegaming.com" || host.endsWith(".groovegaming.com") || host === "client.pragmaticplaylive.net";
   const isWinnerRoulettePage = host === "winner.rw" &&
     /recently-played|autoroulette|auto-roulette/i.test(location.pathname);
   if (!isGameHost && !isWinnerRoulettePage) return;
