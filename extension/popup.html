@@ -8,28 +8,33 @@
 </head>
 <body>
   <main>
-    <header><span class="mark">R</span><div><h1>Roulette Tracker</h1><p>History · not predictions</p></div></header>
-    <section class="scan-panel">
-      <strong>Winner Auto Roulette</strong>
-      <p>Open the recently-played page, then scan for the latest visible result.</p>
-      <button id="scan" class="scan-button">Scan page now</button>
-      <label class="toggle"><input type="checkbox" id="auto"> Monitor new results automatically</label>
-      <p id="scanStatus" role="status">Not scanned yet.</p>
+    <header><span class="mark">R</span><div><h1>Roulette Tracker</h1><p>Last 100 results · frequency only</p></div></header>
+    <section class="recommend" aria-live="polite">
+      <div class="eyebrow">SAMPLE SIGNAL</div>
+      <strong id="recommendSide">NO SIGNAL</strong>
+      <p id="recommendDetail">Record more results to calculate the latest 100-spin frequency.</p>
+      <button id="logSignal" class="log-button" disabled>Log signal before next spin</button>
+      <small id="experimentStatus">Out-of-sample tracking: no signal logged yet.</small>
     </section>
-    <label for="wheel">Wheel type</label>
-    <select id="wheel"><option value="european">European · 0–36</option><option value="american">American · 0, 00, 1–36</option></select>
-    <label for="result">Record a result manually</label>
-    <div class="entry"><input id="result" placeholder="Enter 0–36 or 00" autocomplete="off"><button id="add">Add</button></div>
+    <section class="scan-panel">
+      <div class="scan-head"><strong>Winner Auto Roulette</strong><button id="scan" class="scan-button">Scan</button></div>
+      <label class="toggle"><input type="checkbox" id="auto"> Auto-monitor results</label>
+      <p id="scanStatus" role="status">Open the Winner Auto Roulette recently-played page to scan.</p>
+    </section>
+    <div class="controls">
+      <select id="wheel" aria-label="Wheel type"><option value="european">European · 0–36</option><option value="american">American · 0, 00, 1–36</option></select>
+      <div class="entry"><input id="result" placeholder="Result (0–36 or 00)" autocomplete="off"><button id="add">Add</button></div>
+    </div>
     <p id="message" role="status"></p>
     <section class="stats">
       <article><span>Even</span><strong id="evenCount">0</strong><small id="evenPct">0%</small></article>
       <article><span>Odd</span><strong id="oddCount">0</strong><small id="oddPct">0%</small></article>
       <article><span>Zero</span><strong id="zeroCount">0</strong><small id="zeroPct">0%</small></article>
     </section>
-    <section class="panel"><div class="panel-head"><h2>Recent results</h2><button id="clear" class="quiet">Clear history</button></div><p id="history" class="history">No results recorded yet.</p></section>
-    <section class="panel"><h2>Experimental sample trend</h2><p id="estimate">Not enough results to calculate a sample trend.</p><p id="estimateDetail">This summarizes recorded spins only; it cannot reliably predict the next spin.</p></section>
-    <section class="panel"><h2>What the history means</h2><p id="baseline"></p><p id="streak"></p><p class="warning">Detection depends on numbers being available as readable page text. If the game is inside a cross-origin frame or canvas, automatic scanning may not see it. Past spins do not predict the next spin.</p></section>
-    <footer>Stored locally in this browser. The extension does not place bets or access account credentials.</footer>
+    <div class="meta"><span>Analysis window</span><strong id="windowCount">0 / 100 spins</strong></div>
+    <div class="meta"><span>Logged signal accuracy</span><strong id="accuracy">No trials yet</strong></div>
+    <div class="history-wrap"><div class="history-head"><strong>Recent results</strong><button id="clear" class="quiet">Clear</button></div><p id="history" class="history">No results recorded yet.</p></div>
+    <p class="note">Zero is neither even nor odd. Past frequencies do not predict independent spins or improve the odds. Signal tracking is experimental, not betting advice.</p>
   </main>
   <script src="popup.js"></script>
 </body>
