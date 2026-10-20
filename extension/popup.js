@@ -1,217 +1,172 @@
 const $ = (id) => document.getElementById(id);
-const wheel = $("wheel");
-const resultInput = $("result");
-const addButton = $("add");
-const clearButton = $("clear");
-const message = $("message");
-const scanButton = $("scan");
-const autoToggle = $("auto");
-const scanStatus = $("scanStatus");
-let results = [];
-let lastScanStatus = "";
+const wheel = $("wheel"), resultInput = $("result"), message = $("message");
+const scanButton = $("scan"), autoToggle = $("auto"), scanStatus = $("scanStatus");
+const logButton = $("logSignal");
+let results = [], experiment = [], pendingSignal = null;
 
 function classify(raw) {
   const value = String(raw).trim().toUpperCase();
   if (value === "00") return wheel.value === "american" ? "zero" : null;
-  if (!/^\d{1,2}$/.test(value)) return null;
-  const number = Number(value);
-  if (number < 0 || number > 36) return null;
-  if (number === 0) return "zero";
-  return number % 2 === 0 ? "even" : "odd";
+  if (!/^\\d{1,2}$/.test(value)) return null;
+  const n = Number(value);
+  if (n < 0 || n > 36) return null;
+  return n === 0 ? "zero" : n % 2 === 0 ? "even" : "odd";
 }
 function valid(raw) {
   const value = String(raw).trim().toUpperCase();
-  if (value === "00") return wheel.value === "american";
-  return /^\d{1,2}$/.test(value) && Number(value) >= 0 && Number(value) <= 36;
+  return value === "00" ? wheel.value === "american" :
+    /^\\d{1,2}$/.test(value) && Number(value) >= 0 && Number(value) <= 36;
 }
 function key(raw) { return String(raw).trim().toUpperCase(); }
 function percent(count, total) { return total ? (count / total * 100).toFixed(1) + "%" : "0%"; }
-
-function render() {
+function windowData() {
+  const sample = results.slice(-100);
   const counts = {even:0, odd:0, zero:0};
-  results.forEach((r) => { const c = classify(r); if (c) counts[c]++; });
-  const total = results.length;
+  sample.forEach(value => { const side = classify(value); if (side) counts[side]++; });
+  return {sample, counts};
+}
+function recommendation() {
+  const {sample, counts} = windowData();
+  if (sample.length < 10) return {side:null, counts, sample};
+  if (counts.even === counts.odd) return {side:null, counts, sample};
+  return {side:counts.even > counts.odd ? "even" : "odd", counts, sample};
+}
+function render() {
+  const {sample, counts} = windowData();
   $("evenCount").textContent = counts.even;
   $("oddCount").textContent = counts.odd;
   $("zeroCount").textContent = counts.zero;
+  const total = sample.length;
   $("evenPct").textContent = percent(counts.even,total);
   $("oddPct").textContent = percent(counts.odd,total);
   $("zeroPct").textContent = percent(counts.zero,total);
-  $("history").textContent = total ? results.slice(-20).reverse().join(" · ") : "No results recorded yet.";
-  $("baseline").textContent = wheel.value === "european"
-    ? "European wheel baseline: 18/37 (48.65%) even, 18/37 (48.65%) odd, and 1/37 (2.70%) zero."
-    : "American wheel baseline: 18/38 (47.37%) even, 18/38 (47.37%) odd, and 2/38 (5.26%) zero pockets (0 and 00).";
-  $("streak").textContent = streakText();
-
-  const sample = results.slice(-20);
-  const sampleCounts = {even:0, odd:0, zero:0};
-  sample.forEach((r) => {
-    const outcome = classify(r);
-    if (outcome) sampleCounts[outcome]++;
-  });
-  const estimate = $("estimate");
-  const estimateDetail = $("estimateDetail");
-  if (estimate && estimateDetail) {
-    if (sample.length < 5) {
-      estimate.textContent = "Not enough results yet (record at least 5).";
-      estimateDetail.textContent = "This is a summary of recent outcomes, not a reliable prediction of the next spin.";
-    } else {
-      const parityTotal = sampleCounts.even + sampleCounts.odd;
-      let trend = "No clear even/odd lean in the last " + sample.length + " results.";
-      if (parityTotal && sampleCounts.even / parityTotal >= 0.60) {
-        trend = "Recent sample has more even results (" + sampleCounts.even + "/" + parityTotal + ").";
-      } else if (parityTotal && sampleCounts.odd / parityTotal >= 0.60) {
-        trend = "Recent sample has more odd results (" + sampleCounts.odd + "/" + parityTotal + ").";
-      }
-      estimate.textContent = trend;
-      const evenRate = parityTotal ? (sampleCounts.even / parityTotal * 100).toFixed(1) : "0.0";
-      const oddRate = parityTotal ? (sampleCounts.odd / parityTotal * 100).toFixed(1) : "0.0";
-      estimateDetail.textContent = "Last " + sample.length + " recorded: even " + evenRate +
-        "%, odd " + oddRate + "%; zero " + sampleCounts.zero + ". European-wheel baseline: 48.65% even, 48.65% odd, 2.70% zero. Spins are independent; this trend does not improve the odds.";
-    }
-  }
+  $("windowCount").textContent = total + " / 100 spins";
+  $("history").textContent = results.length ? results.slice(-20).reverse().join(" · ") : "No results recorded yet.";
+  const rec = recommendation();
+  $("recommendSide").textContent = rec.side ? rec.side.toUpperCase() : "NO SIGNAL";
+  $("recommendDetail").textContent = total < 10
+    ? "Need at least 10 recorded results. Uses frequency from the latest 100."
+    : rec.side
+      ? "Last " + total + ": even " + counts.even + " · odd " + counts.odd + " · zero " + counts.zero + "."
+      : "Even and odd counts are tied in the latest " + total + " results.";
+  logButton.disabled = !rec.side;
+  const completed = experiment.filter(x => x.outcome);
+  const hits = completed.filter(x => x.prediction === x.outcome).length;
+  $("accuracy").textContent = completed.length ? hits + "/" + completed.length + " (" + (hits/completed.length*100).toFixed(1) + "%)" : "No trials yet";
+  $("experimentStatus").textContent = pendingSignal
+    ? "Signal logged. Waiting for the next recorded spin."
+    : completed.length ? completed.length + " resolved pre-spin trial" + (completed.length === 1 ? "" : "s") + "."
+    : "No signal logged yet.";
 }
-function streakText() {
-  if (!results.length) return "Current streak: none yet.";
-  const last = classify(results[results.length - 1]);
-  let count = 0;
-  for (let i=results.length-1;i>=0;i--) {
-    if (classify(results[i]) !== last) break;
-    count++;
-  }
-  return "Latest recorded streak: " + count + " " + (last || "unknown") + (count === 1 ? " result" : " results") + ". Descriptive only.";
+function resolvePending(newResult) {
+  if (!pendingSignal) return;
+  const outcome = classify(newResult);
+  pendingSignal.outcome = outcome;
+  pendingSignal.result = key(newResult);
+  pendingSignal.resolvedAt = new Date().toISOString();
+  experiment.push(pendingSignal);
+  experiment = experiment.slice(-500);
+  pendingSignal = null;
+  chrome.storage.local.set({rouletteExperiment:experiment,roulettePendingSignal:null});
 }
 async function load(detectActivePage = false) {
-  const saved = await chrome.storage.local.get(["rouletteResults","rouletteWheel","rouletteAuto","rouletteLastScanSignature","rouletteScanStatus"]);
+  const saved = await chrome.storage.local.get(["rouletteResults","rouletteWheel","rouletteAuto","rouletteScanStatus","rouletteExperiment","roulettePendingSignal"]);
   results = Array.isArray(saved.rouletteResults) ? saved.rouletteResults : [];
   if (saved.rouletteWheel === "american") wheel.value = "american";
   autoToggle.checked = saved.rouletteAuto === true;
-  scanStatus.textContent = saved.rouletteScanStatus || "Ready. Open the Winner Auto Roulette page to scan.";
+  experiment = Array.isArray(saved.rouletteExperiment) ? saved.rouletteExperiment : [];
+  pendingSignal = saved.roulettePendingSignal || null;
+  scanStatus.textContent = saved.rouletteScanStatus || "Open the Winner Auto Roulette recently-played page to scan.";
   render();
   if (detectActivePage) {
     const tab = await activeTab().catch(() => null);
-    if (tab && isWinnerRouletteUrl(tab.url || "")) {
-      scanStatus.textContent = "Winner Auto Roulette page detected in the active tab. Click Scan page now.";
-    } else if (tab?.url) {
-      scanStatus.textContent = "Winner Auto Roulette not detected in the active tab. Open its recently-played page to scan.";
-    }
+    if (tab && isWinnerRouletteUrl(tab.url || "")) scanStatus.textContent = "Winner Auto Roulette detected. Scan when results are visible.";
   }
 }
-async function save() {
-  await chrome.storage.local.set({rouletteResults:results,rouletteWheel:wheel.value});
-}
-async function activeTab() {
-  const tabs = await chrome.tabs.query({active:true,currentWindow:true});
-  return tabs[0];
-}
+async function save() { await chrome.storage.local.set({rouletteResults:results,rouletteWheel:wheel.value}); }
+async function activeTab() { const tabs = await chrome.tabs.query({active:true,currentWindow:true}); return tabs[0]; }
 function isWinnerRouletteUrl(rawUrl) {
   try {
     const url = new URL(rawUrl);
-    return url.protocol === "https:" &&
-      url.hostname === "winner.rw" &&
-      /recently-played/i.test(url.pathname) &&
-      /(auto-?roulette|roulette)/i.test(url.pathname);
-  } catch {
-    return false;
-  }
+    return url.protocol === "https:" && url.hostname === "winner.rw" &&
+      /recently-played/i.test(url.pathname) && /(auto-?roulette|roulette)/i.test(url.pathname);
+  } catch { return false; }
 }
 scanButton.addEventListener("click", async () => {
-  scanButton.disabled = true;
-  scanStatus.textContent = "Scanning the active tab…";
+  scanButton.disabled = true; scanStatus.textContent = "Scanning…";
   try {
     const tab = await activeTab();
     if (!tab?.id || !isWinnerRouletteUrl(tab.url || "")) {
-      scanStatus.textContent = "This tab is not recognized as Winner Auto Roulette. Open the recently-played Auto Roulette page, then click Scan page now. Current tab: " + (tab?.url || "URL unavailable");
-      return;
+      scanStatus.textContent = "Open Winner Auto Roulette's recently-played page first."; return;
     }
     const frames = await chrome.webNavigation.getAllFrames({tabId:tab.id});
     const allFrames = frames || [];
     const gameFrames = allFrames.filter(frame => {
-      try {
-        const host = new URL(frame.url).hostname;
-        return host === "client.pragmaticplaylive.net" || host === "groovegaming.com" || host.endsWith(".groovegaming.com");
-      } catch {
-        return false;
-      }
+      try { const host = new URL(frame.url).hostname; return host === "client.pragmaticplaylive.net" || host === "groovegaming.com" || host.endsWith(".groovegaming.com"); }
+      catch { return false; }
     });
-    // Try the known Pragmatic Play and GrooveGaming frames first. If the provider changes its frame
-    // hostname, probe the remaining frames too; only the injected game script
-    // will respond to the scan message.
-    const framesToTry = [...gameFrames, ...allFrames.filter(frame =>
-      !gameFrames.some(gameFrame => gameFrame.frameId === frame.frameId)
-    )];
-    if (!framesToTry.length) {
-      scanStatus.textContent = "Winner page detected, but it has no frames yet. Wait for the game to load, then scan again.";
-      return;
-    }
-    let response = null;
-    let lastError = null;
+    const framesToTry = [...gameFrames, ...allFrames.filter(f => !gameFrames.some(g => g.frameId === f.frameId))];
+    let response = null, lastError = null;
     for (const frame of framesToTry) {
       try {
-        const result = await chrome.tabs.sendMessage(
-          tab.id,
-          {type:"ROULETTE_SCAN_NOW"},
-          {frameId:frame.frameId}
-        );
-        if (result?.ok) {
-          response = result;
-          break;
-        }
+        const result = await chrome.tabs.sendMessage(tab.id,{type:"ROULETTE_SCAN_NOW"},{frameId:frame.frameId});
+        if (result?.ok) { response = result; break; }
         if (result) response = result;
-      } catch (error) {
-        lastError = error;
-      }
+      } catch (error) { lastError = error; }
     }
-    scanStatus.textContent = response?.message ||
-      (lastError
-        ? "Could not contact the game frame. Reload the Winner page after updating the extension."
-        : "No readable roulette results were found inside the game frame.");
+    scanStatus.textContent = response?.message || (lastError ? "Could not contact game frame. Reload the Winner page after updating." : "No readable results found; wait for the result list and scan again.");
     await load();
-  } catch (error) {
-    scanStatus.textContent = "Could not scan this page. Reload the webpage after updating the extension, then try again.";
-  } finally {
-    scanButton.disabled = false;
-  }
+  } catch { scanStatus.textContent = "Could not scan. Reload the webpage and try again."; }
+  finally { scanButton.disabled = false; }
 });
 autoToggle.addEventListener("change", async () => {
   await chrome.storage.local.set({rouletteAuto:autoToggle.checked});
-  scanStatus.textContent = autoToggle.checked
-    ? "Automatic monitoring enabled for the supported Winner page. Keep that page open."
-    : "Automatic monitoring disabled.";
+  scanStatus.textContent = autoToggle.checked ? "Auto-monitoring enabled. Keep the Winner page open." : "Auto-monitoring disabled.";
 });
-addButton.addEventListener("click", async () => {
+$("add").addEventListener("click", async () => {
   const raw = key(resultInput.value);
-  if (!valid(raw)) {
-    message.textContent = wheel.value === "american" ? "Enter 0–36 or 00." : "Enter a number from 0 to 36.";
-    return;
-  }
-  results.push(raw);
-  if (results.length > 500) results = results.slice(-500);
-  resultInput.value = "";
-  message.textContent = "Result recorded locally.";
-  await save();
-  render();
+  if (!valid(raw)) { message.textContent = wheel.value === "american" ? "Enter 0–36 or 00." : "Enter a number from 0 to 36."; return; }
+  const previousLength = results.length;
+  results.push(raw); if (results.length > 500) results = results.slice(-500);
+  if (pendingSignal && results.length > previousLength) resolvePending(raw);
+  resultInput.value = ""; message.textContent = "Saved locally.";
+  await save(); await chrome.storage.local.set({rouletteExperiment:experiment,roulettePendingSignal:pendingSignal}); render();
 });
-resultInput.addEventListener("keydown", (event) => { if (event.key === "Enter") addButton.click(); });
-clearButton.addEventListener("click", async () => {
+resultInput.addEventListener("keydown", event => { if (event.key === "Enter") $("add").click(); });
+$("clear").addEventListener("click", async () => {
   if (!results.length) { message.textContent = "History is already empty."; return; }
-  results = [];
-  await save();
-  message.textContent = "Local history cleared.";
-  render();
+  if (!confirm("Clear recorded roulette history? Experiment records will remain.")) return;
+  results = []; await save(); message.textContent = "History cleared."; render();
 });
 wheel.addEventListener("change", async () => {
-  results = results.filter(valid);
-  await save();
+  results = results.filter(valid); await save(); render();
+  message.textContent = "Wheel setting updated. Unsupported results were removed.";
+});
+logButton.addEventListener("click", async () => {
+  const rec = recommendation();
+  if (!rec.side || pendingSignal) return;
+  pendingSignal = {prediction:rec.side, loggedAt:new Date().toISOString(), basedOn:rec.sample.slice(-100), windowSize:rec.sample.length};
+  await chrome.storage.local.set({roulettePendingSignal:pendingSignal});
+  message.textContent = rec.side.toUpperCase() + " signal logged before the next recorded result.";
   render();
-  message.textContent = "Wheel type updated. Results outside this wheel's format were removed.";
 });
 chrome.storage.onChanged.addListener((changes, area) => {
   if (area !== "local") return;
   if (changes.rouletteResults) {
-    results = Array.isArray(changes.rouletteResults.newValue) ? changes.rouletteResults.newValue : [];
+    const oldResults = Array.isArray(changes.rouletteResults.oldValue) ? changes.rouletteResults.oldValue : [];
+    const newResults = Array.isArray(changes.rouletteResults.newValue) ? changes.rouletteResults.newValue : [];
+    results = newResults;
+    if (pendingSignal && newResults.length > oldResults.length) {
+      const nextResult = newResults[oldResults.length];
+      if (nextResult !== undefined) resolvePending(nextResult);
+    }
     render();
   }
   if (changes.rouletteScanStatus) scanStatus.textContent = changes.rouletteScanStatus.newValue || "";
+  if (changes.rouletteExperiment || changes.roulettePendingSignal) {
+    if (changes.rouletteExperiment) experiment = Array.isArray(changes.rouletteExperiment.newValue) ? changes.rouletteExperiment.newValue : [];
+    if (changes.roulettePendingSignal) pendingSignal = changes.roulettePendingSignal.newValue || null;
+    render();
+  }
 });
 load(true).catch(() => { message.textContent = "Could not load local history."; render(); });
