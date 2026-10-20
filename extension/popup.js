@@ -7,7 +7,7 @@ let results = [], experiment = [], pendingSignal = null;
 function classify(raw) {
   const value = String(raw).trim().toUpperCase();
   if (value === "00") return wheel.value === "american" ? "zero" : null;
-  if (!/^\\d{1,2}$/.test(value)) return null;
+  if (!/^\d{1,2}$/.test(value)) return null;
   const n = Number(value);
   if (n < 0 || n > 36) return null;
   return n === 0 ? "zero" : n % 2 === 0 ? "even" : "odd";
@@ -15,7 +15,7 @@ function classify(raw) {
 function valid(raw) {
   const value = String(raw).trim().toUpperCase();
   return value === "00" ? wheel.value === "american" :
-    /^\\d{1,2}$/.test(value) && Number(value) >= 0 && Number(value) <= 36;
+    /^\d{1,2}$/.test(value) && Number(value) >= 0 && Number(value) <= 36;
 }
 function key(raw) { return String(raw).trim().toUpperCase(); }
 function percent(count, total) { return total ? (count / total * 100).toFixed(1) + "%" : "0%"; }
@@ -25,11 +25,30 @@ function windowData() {
   sample.forEach(value => { const side = classify(value); if (side) counts[side]++; });
   return {sample, counts};
 }
-function recommendation() {
-  const {sample, counts} = windowData();
-  if (sample.length < 10) return {side:null, counts, sample};
-  if (counts.even === counts.odd) return {side:null, counts, sample};
+function recommendationFrom(sample) {
+  const counts = {even:0, odd:0, zero:0};
+  sample.forEach(value => { const side = classify(value); if (side) counts[side]++; });
+  if (!sample.length || counts.even === counts.odd) return {side:null, counts, sample};
   return {side:counts.even > counts.odd ? "even" : "odd", counts, sample};
+}
+function recommendation() {
+  // slice(-100) uses all available history when fewer than 100 results exist.
+  return recommendationFrom(results.slice(-100));
+}
+function historicalBacktest() {
+  let correct = 0, evaluated = 0, skippedTies = 0, skippedZero = 0;
+  // Walk forward: each result is predicted only from results that came before it.
+  for (let i = 1; i < results.length; i++) {
+    const prior = results.slice(Math.max(0, i - 100), i);
+    const rec = recommendationFrom(prior);
+    if (!rec.side) { skippedTies++; continue; }
+    const outcome = classify(results[i]);
+    if (outcome === "zero") { skippedZero++; continue; }
+    if (outcome !== "even" && outcome !== "odd") continue;
+    evaluated++;
+    if (rec.side === outcome) correct++;
+  }
+  return {correct, evaluated, skippedTies, skippedZero, pct: evaluated ? (correct / evaluated * 100).toFixed(1) : null};
 }
 function render() {
   const {sample, counts} = windowData();
@@ -44,19 +63,25 @@ function render() {
   $("history").textContent = results.length ? results.slice(-20).reverse().join(" · ") : "No results recorded yet.";
   const rec = recommendation();
   $("recommendSide").textContent = rec.side ? rec.side.toUpperCase() : "NO SIGNAL";
-  $("recommendDetail").textContent = total < 10
-    ? "Need at least 10 recorded results. Uses frequency from the latest 100."
-    : rec.side
-      ? "Last " + total + ": even " + counts.even + " · odd " + counts.odd + " · zero " + counts.zero + "."
-      : "Even and odd counts are tied in the latest " + total + " results.";
+  $("recommendDetail").textContent = rec.side
+    ? "Frequency-based signal · " + total + " results: even " + counts.even + " · odd " + counts.odd + " · zero " + counts.zero + "."
+    : total
+      ? "NO SIGNAL: even and odd counts are tied in the latest " + total + " results."
+      : "Record results to calculate a frequency-based signal.";
   logButton.disabled = !rec.side;
-  const completed = experiment.filter(x => x.outcome);
+  const completed = experiment.filter(x => x.outcome === "even" || x.outcome === "odd");
   const hits = completed.filter(x => x.prediction === x.outcome).length;
   $("accuracy").textContent = completed.length ? hits + "/" + completed.length + " (" + (hits/completed.length*100).toFixed(1) + "%)" : "No trials yet";
+  const backtest = historicalBacktest();
+  $("backtestAccuracy").textContent = backtest.pct === null
+    ? "Not enough eligible predictions"
+    : backtest.correct + "/" + backtest.evaluated + " (" + backtest.pct + "%)";
+  $("backtestDetail").textContent = "Walk-forward historical test · ties skipped: " + backtest.skippedTies + " · zero outcomes skipped: " + backtest.skippedZero + ". This is historical, not future performance.";
   $("experimentStatus").textContent = pendingSignal
     ? "Signal logged. Waiting for the next recorded spin."
     : completed.length ? completed.length + " resolved pre-spin trial" + (completed.length === 1 ? "" : "s") + "."
     : "No signal logged yet.";
+  if (pendingSignal) logButton.disabled = true;
 }
 function resolvePending(newResult) {
   if (!pendingSignal) return;
