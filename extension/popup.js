@@ -62,7 +62,7 @@ function inversionRecommendation(sample) {
     const a = runs[runs.length - 2], b = runs[runs.length - 1];
     if ((a.side === "even" || a.side === "odd") &&
         (b.side === "even" || b.side === "odd")) {
-      for (let i = 0; i <= runs.length - 3; i++) {
+      for (let i = 0; i <= runs.length - 4; i++) {
         if (runs[i].side === "zero" || runs[i+1].side === "zero" || runs[i+2].side === "zero") continue;
         if (signature(runs[i]) === signature(a) && signature(runs[i+1]) === signature(b)) {
           const nextSide = runs[i+2].side;
