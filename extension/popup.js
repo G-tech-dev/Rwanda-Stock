@@ -25,30 +25,86 @@ function windowData() {
   sample.forEach(value => { const side = classify(value); if (side) counts[side]++; });
   return {sample, counts};
 }
-function recommendationFrom(sample) {
+function runsFrom(sample) {
+  const runs = [];
+  for (const raw of sample) {
+    const side = classify(raw);
+    if (!side) continue;
+    const last = runs[runs.length - 1];
+    if (last && last.side === side) last.length++;
+    else runs.push({side, length:1});
+  }
+  return runs;
+}
+function signature(run) { return run.side + ":" + run.length; }
+
+/*
+ * Inversion analyzer:
+ * 1) Run-length encode the observed sequence.
+ * 2) Find earlier occurrences of the same last-two-run signature.
+ * 3) Invert the most common non-zero category that followed those occurrences.
+ * 4) If there is no historical match, fall back to inverting the latest
+ *    Even/Odd result. Zero is never treated as Even or Odd.
+ * This is an experimental heuristic, not a probability advantage.
+ */
+function inversionRecommendation(sample) {
+  const runs = runsFrom(sample);
+  const binaryRuns = runs.filter(run => run.side === "even" || run.side === "odd");
+  const latest = [...sample].reverse().map(classify).find(side => side === "even" || side === "odd") || null;
   const counts = {even:0, odd:0, zero:0};
   sample.forEach(value => { const side = classify(value); if (side) counts[side]++; });
-  if (!sample.length || counts.even === counts.odd) return {side:null, counts, sample};
-  return {side:counts.even > counts.odd ? "even" : "odd", counts, sample};
+  if (!latest) return {side:null, counts, sample, matches:0, basis:"No Even/Odd result available", runs};
+
+  let matches = 0;
+  const following = {even:0, odd:0};
+  // Match adjacent run signatures, but don't match across a zero run.
+  if (runs.length >= 2) {
+    const a = runs[runs.length - 2], b = runs[runs.length - 1];
+    if ((a.side === "even" || a.side === "odd") &&
+        (b.side === "even" || b.side === "odd")) {
+      for (let i = 0; i <= runs.length - 3; i++) {
+        if (runs[i].side === "zero" || runs[i+1].side === "zero" || runs[i+2].side === "zero") continue;
+        if (signature(runs[i]) === signature(a) && signature(runs[i+1]) === signature(b)) {
+          const nextSide = runs[i+2].side;
+          if (nextSide === "even" || nextSide === "odd") {
+            following[nextSide]++;
+            matches++;
+          }
+        }
+      }
+    }
+  }
+  if (matches && following.even !== following.odd) {
+    const historicalNext = following.even > following.odd ? "even" : "odd";
+    return {
+      side: historicalNext === "even" ? "odd" : "even",
+      counts, sample, matches, following, runs,
+      basis: "Inverted repeated run pattern (" + matches + " match" + (matches === 1 ? "" : "es") + ")"
+    };
+  }
+  return {
+    side: latest === "even" ? "odd" : "even",
+    counts, sample, matches, following, runs,
+    basis: matches ? "Pattern votes tied; inverted latest Even/Odd result" : "Fallback: invert latest Even/Odd result"
+  };
 }
 function recommendation() {
-  // slice(-100) uses all available history when fewer than 100 results exist.
-  return recommendationFrom(results.slice(-100));
+  return inversionRecommendation(results.slice(-100));
 }
 function historicalBacktest() {
-  let correct = 0, evaluated = 0, skippedTies = 0, skippedZero = 0;
-  // Walk forward: each result is predicted only from results that came before it.
+  let correct = 0, evaluated = 0, skippedNoSignal = 0, skippedZero = 0;
+  // Walk forward: each result is predicted using only earlier results.
   for (let i = 1; i < results.length; i++) {
     const prior = results.slice(Math.max(0, i - 100), i);
-    const rec = recommendationFrom(prior);
-    if (!rec.side) { skippedTies++; continue; }
+    const rec = inversionRecommendation(prior);
+    if (!rec.side) { skippedNoSignal++; continue; }
     const outcome = classify(results[i]);
     if (outcome === "zero") { skippedZero++; continue; }
     if (outcome !== "even" && outcome !== "odd") continue;
     evaluated++;
     if (rec.side === outcome) correct++;
   }
-  return {correct, evaluated, skippedTies, skippedZero, pct: evaluated ? (correct / evaluated * 100).toFixed(1) : null};
+  return {correct, evaluated, skippedNoSignal, skippedZero, pct: evaluated ? (correct / evaluated * 100).toFixed(1) : null};
 }
 function render() {
   const {sample, counts} = windowData();
@@ -61,14 +117,21 @@ function render() {
   $("zeroPct").textContent = percent(counts.zero,total);
   $("windowCount").textContent = total + " / 100 spins";
   $("history").textContent = results.length ? results.slice(-20).reverse().join(" · ") : "No results recorded yet.";
+
   const rec = recommendation();
-  $("recommendSide").textContent = rec.side ? rec.side.toUpperCase() : "NO SIGNAL";
-  $("recommendDetail").textContent = rec.side
-    ? "Frequency-based signal · " + total + " results: even " + counts.even + " · odd " + counts.odd + " · zero " + counts.zero + "."
-    : total
-      ? "NO SIGNAL: even and odd counts are tied in the latest " + total + " results."
-      : "Record results to calculate a frequency-based signal.";
-  logButton.disabled = !rec.side;
+  ["even","odd","zero"].forEach(side => {
+    const card = $(side + "Card");
+    card.classList.toggle("recommended", rec.side === side);
+    const marker = $(side + "Recommended");
+    marker.textContent = rec.side === side ? "INVERSION PICK" : "";
+    marker.hidden = rec.side !== side;
+  });
+  $("signalSide").textContent = rec.side ? rec.side.toUpperCase() : "NO SIGNAL";
+  $("signalDetail").textContent = rec.side
+    ? rec.basis + " · " + total + " results. Counts: E " + counts.even + " / O " + counts.odd + " / Z " + counts.zero + "."
+    : "Record more results to form an Even/Odd inversion candidate.";
+  logButton.disabled = !rec.side || !!pendingSignal;
+
   const completed = experiment.filter(x => x.outcome === "even" || x.outcome === "odd");
   const hits = completed.filter(x => x.prediction === x.outcome).length;
   $("accuracy").textContent = completed.length ? hits + "/" + completed.length + " (" + (hits/completed.length*100).toFixed(1) + "%)" : "No trials yet";
@@ -76,12 +139,11 @@ function render() {
   $("backtestAccuracy").textContent = backtest.pct === null
     ? "Not enough eligible predictions"
     : backtest.correct + "/" + backtest.evaluated + " (" + backtest.pct + "%)";
-  $("backtestDetail").textContent = "Walk-forward historical test · ties skipped: " + backtest.skippedTies + " · zero outcomes skipped: " + backtest.skippedZero + ". This is historical, not future performance.";
+  $("backtestDetail").textContent = "Walk-forward inversion test · no signal: " + backtest.skippedNoSignal + " · zero outcomes skipped: " + backtest.skippedZero + ". Historical results are not future performance.";
   $("experimentStatus").textContent = pendingSignal
     ? "Signal logged. Waiting for the next recorded spin."
     : completed.length ? completed.length + " resolved pre-spin trial" + (completed.length === 1 ? "" : "s") + "."
-    : "No signal logged yet.";
-  if (pendingSignal) logButton.disabled = true;
+    : "Log a signal before the next spin to track live results.";
 }
 function resolvePending(newResult) {
   if (!pendingSignal) return;
@@ -170,9 +232,9 @@ wheel.addEventListener("change", async () => {
 logButton.addEventListener("click", async () => {
   const rec = recommendation();
   if (!rec.side || pendingSignal) return;
-  pendingSignal = {prediction:rec.side, loggedAt:new Date().toISOString(), basedOn:rec.sample.slice(-100), windowSize:rec.sample.length};
+  pendingSignal = {prediction:rec.side, loggedAt:new Date().toISOString(), basedOn:rec.sample.slice(-100), windowSize:rec.sample.length, method:"run-length-inversion", basis:rec.basis};
   await chrome.storage.local.set({roulettePendingSignal:pendingSignal});
-  message.textContent = rec.side.toUpperCase() + " signal logged before the next recorded result.";
+  message.textContent = rec.side.toUpperCase() + " inversion signal logged before the next recorded result.";
   render();
 });
 chrome.storage.onChanged.addListener((changes, area) => {
