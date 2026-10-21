@@ -8,14 +8,7 @@
 </head>
 <body>
   <main>
-    <header><span class="mark">R</span><div><h1>Roulette Tracker</h1><p>Last 100 or all available · frequency-based signal</p></div></header>
-    <section class="recommend" aria-live="polite">
-      <div class="eyebrow">SAMPLE SIGNAL</div>
-      <strong id="recommendSide">NO SIGNAL</strong>
-      <p id="recommendDetail">Record more results to calculate the latest 100-spin frequency.</p>
-      <button id="logSignal" class="log-button" disabled>Log signal before next spin</button>
-      <small id="experimentStatus">Out-of-sample tracking: no signal logged yet.</small>
-    </section>
+    <header><span class="mark">R</span><div><h1>Roulette Tracker</h1><p>Run-length inversion · experimental pattern analysis</p></div></header>
     <section class="scan-panel">
       <div class="scan-head"><strong>Winner Auto Roulette</strong><button id="scan" class="scan-button">Scan</button></div>
       <label class="toggle"><input type="checkbox" id="auto"> Auto-monitor results</label>
@@ -26,17 +19,23 @@
       <div class="entry"><input id="result" placeholder="Result (0–36 or 00)" autocomplete="off"><button id="add">Add</button></div>
     </div>
     <p id="message" role="status"></p>
-    <section class="stats">
-      <article><span>Even</span><strong id="evenCount">0</strong><small id="evenPct">0%</small></article>
-      <article><span>Odd</span><strong id="oddCount">0</strong><small id="oddPct">0%</small></article>
-      <article><span>Zero</span><strong id="zeroCount">0</strong><small id="zeroPct">0%</small></article>
+    <section class="stats" aria-label="Even odd zero results">
+      <article id="evenCard"><span>Even</span><strong id="evenCount">0</strong><small id="evenPct">0%</small><b id="evenRecommended" class="pick-label" hidden></b></article>
+      <article id="oddCard"><span>Odd</span><strong id="oddCount">0</strong><small id="oddPct">0%</small><b id="oddRecommended" class="pick-label" hidden></b></article>
+      <article id="zeroCard"><span>Zero</span><strong id="zeroCount">0</strong><small id="zeroPct">0%</small><b id="zeroRecommended" class="pick-label" hidden></b></article>
+    </section>
+    <section class="signal-summary" aria-live="polite">
+      <div><span class="eyebrow">INVERSION CANDIDATE</span><strong id="signalSide">NO SIGNAL</strong></div>
+      <p id="signalDetail">Record results to analyze run-length patterns.</p>
+      <button id="logSignal" class="log-button" disabled>Log signal before next spin</button>
+      <small id="experimentStatus">Log a signal before the next spin to track live results.</small>
     </section>
     <div class="meta"><span>Analysis window</span><strong id="windowCount">0 / 100 spins</strong></div>
     <div class="meta"><span>Prediction success (logged)</span><strong id="accuracy">No trials yet</strong></div>
     <div class="meta"><span>Historical walk-forward success</span><strong id="backtestAccuracy">Not enough eligible predictions</strong></div>
     <p id="backtestDetail" class="note">Historical test predicts each result using only earlier results.</p>
     <div class="history-wrap"><div class="history-head"><strong>Recent results</strong><button id="clear" class="quiet">Clear</button></div><p id="history" class="history">No results recorded yet.</p></div>
-    <p class="note">Zero is neither even nor odd. Past frequencies do not predict independent spins or improve the odds. Signal tracking is experimental, not betting advice.</p>
+    <p class="note">The analyzer matches recent run-length patterns and tests an inverted category. Past results do not predict independent spins or improve the odds. Experimental signal, not betting advice.</p>
   </main>
   <script src="popup.js"></script>
 </body>
