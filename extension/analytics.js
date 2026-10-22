@@ -12,7 +12,7 @@
   const classify = raw => {
     const s = String(raw).trim().toUpperCase();
     if (s === "00") return "zero";
-    if (!/^\\d{1,2}$/.test(s)) return null;
+    if (!/^\d{1,2}$/.test(s)) return null;
     const n = Number(s);
     return n < 0 || n > 36 ? null : n === 0 ? "zero" : n % 2 === 0 ? "even" : "odd";
   };
