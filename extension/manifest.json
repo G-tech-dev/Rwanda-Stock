@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "Roulette Even/Odd Tracker",
-  "version": "1.5.0",
-  "description": "Track roulette results locally and scan the Winner Auto Roulette recent-results page.",
+  "version": "1.7.0",
+  "description": "Track roulette results locally and analyze experimental run-length inversion patterns.",
   "permissions": [
     "storage",
     "activeTab",
