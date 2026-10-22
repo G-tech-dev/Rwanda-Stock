@@ -31,7 +31,12 @@
       <small id="experimentStatus">Log a signal before the next spin to track live results.</small>
     </section>
     <div class="meta"><span>Analysis window</span><strong id="windowCount">0 / 100 spins</strong></div>
-    <div class="meta"><span>Prediction success (logged)</span><strong id="accuracy">No trials yet</strong></div>
+    <section class="accuracy-panel" aria-label="Accuracy of the latest ten resolved predictions">
+      <div id="accuracyRing" class="accuracy-ring" role="img" aria-label="Latest ten predictions accuracy">
+        <div class="accuracy-ring-inner"><strong id="accuracyPercent">—</strong><span>ACCURACY</span></div>
+      </div>
+      <div class="accuracy-copy"><strong>Last 10 predictions</strong><p id="accuracy">No trials yet</p><small id="accuracyDetail">Log a prediction before a spin to start measuring accuracy.</small></div>
+    </section>
     <div class="meta"><span>Historical walk-forward success</span><strong id="backtestAccuracy">Not enough eligible predictions</strong></div>
     <p id="backtestDetail" class="note">Historical test predicts each result using only earlier results.</p>
     <div class="history-wrap"><div class="history-head"><strong>Recent results</strong><button id="clear" class="quiet">Clear</button></div><p id="history" class="history">No results recorded yet.</p></div>
