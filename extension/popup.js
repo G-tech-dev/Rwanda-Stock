@@ -132,9 +132,20 @@ function render() {
     : "Record more results to form an Even/Odd inversion candidate.";
   logButton.disabled = !rec.side || !!pendingSignal;
 
-  const completed = experiment.filter(x => x.outcome === "even" || x.outcome === "odd");
+  // Accuracy ring: latest 10 resolved, logged predictions. A zero result is a miss
+  // for an Even/Odd prediction, and unresolved trials are not counted.
+  const completed = experiment.filter(x =>
+    (x.prediction === "even" || x.prediction === "odd") &&
+    (x.outcome === "even" || x.outcome === "odd" || x.outcome === "zero")
+  ).slice(-10);
   const hits = completed.filter(x => x.prediction === x.outcome).length;
-  $("accuracy").textContent = completed.length ? hits + "/" + completed.length + " (" + (hits/completed.length*100).toFixed(1) + "%)" : "No trials yet";
+  const accuracyPct = completed.length ? Math.round(hits / completed.length * 100) : 0;
+  $("accuracy").textContent = completed.length ? hits + "/" + completed.length + " correct" : "No trials yet";
+  $("accuracyRing").style.setProperty("--accuracy", accuracyPct + "%");
+  $("accuracyPercent").textContent = completed.length ? accuracyPct + "%" : "—";
+  $("accuracyDetail").textContent = completed.length
+    ? "Latest " + completed.length + " resolved predictions · " + hits + " correct, " + (completed.length - hits) + " incorrect."
+    : "Log a prediction before a spin to start measuring accuracy.";
   const backtest = historicalBacktest();
   $("backtestAccuracy").textContent = backtest.pct === null
     ? "Not enough eligible predictions"
@@ -142,7 +153,7 @@ function render() {
   $("backtestDetail").textContent = "Walk-forward inversion test · no signal: " + backtest.skippedNoSignal + " · zero outcomes skipped: " + backtest.skippedZero + ". Historical results are not future performance.";
   $("experimentStatus").textContent = pendingSignal
     ? "Signal logged. Waiting for the next recorded spin."
-    : completed.length ? completed.length + " resolved pre-spin trial" + (completed.length === 1 ? "" : "s") + "."
+    : experiment.length ? experiment.length + " saved signal record" + (experiment.length === 1 ? "" : "s") + "."
     : "Log a signal before the next spin to track live results.";
 }
 function resolvePending(newResult) {
